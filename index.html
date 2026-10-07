@@ -19,14 +19,17 @@ tr.section th{background:var(--hdr);font-weight:700;color:var(--fg)}
 .diff-del{background:var(--del);text-decoration:line-through;border-radius:2px}.diff-add{background:var(--add);border-radius:2px}.diff-ign{background:var(--ign);color:var(--mu);border-radius:2px}
 .empty{color:var(--mu)}.legend{display:flex;flex-wrap:wrap;gap:10px;margin:7px 0 10px;font-size:12px}.legend span{padding:2px 7px;border-radius:10px}.legend .a{background:var(--add)}.legend .d{background:var(--del)}.legend .c{background:var(--chg)}.legend .i{background:var(--ign);color:var(--mu)}
 pre{margin:0;padding:8px 12px;font:12px ui-monospace,Menlo,Consolas,monospace;white-space:pre-wrap}
+
+/* v3 RFC-focused UI */
+.header-card{border:1px solid var(--bd);border-radius:7px;margin:7px 0;background:var(--bg);overflow:hidden}.header-card>summary{list-style:none;padding:9px 11px;cursor:pointer;background:var(--pn)}.header-card>summary::-webkit-details-marker{display:none}.hdr-title{display:flex;align-items:center;gap:7px;flex-wrap:wrap}.rfc-note{font-size:11px;color:var(--mu);margin-top:2px}.raw-pair{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:7px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px}.raw-pair>div{border:1px solid var(--bd);border-radius:5px;padding:6px;background:var(--bg)}.side-label{display:block;color:var(--mu);font:10px system-ui,sans-serif;margin-bottom:3px}.count-badge,.same-badge,.ignored-count,.ignored-badge,.focus-badge,.left-badge,.right-badge{display:inline-flex;align-items:center;border-radius:10px;padding:2px 7px;font:600 10px system-ui,sans-serif;letter-spacing:.2px}.count-badge,.focus-badge{background:var(--chg)}.same-badge{background:var(--add)}.ignored-count,.ignored-badge{background:var(--ign);color:var(--mu)}.left-badge{background:var(--del)}.right-badge{background:var(--add)}.field-table{width:100%;border-collapse:collapse}.field-table th,.field-table td{padding:5px 8px;border-top:1px solid var(--bd);vertical-align:top;font:12px/1.4 ui-monospace,Menlo,Consolas,monospace;text-align:left}.field-table th:first-child{width:20%;font-family:system-ui,sans-serif;font-weight:600}.field-table th:last-child{width:130px;font-family:system-ui,sans-serif}.field.focus td{background:var(--chg)}.field.focus .fieldname{border-left:4px solid var(--ac);padding-left:4px;font-weight:700}.field.ignored td{background:var(--ign);color:var(--mu)}.field.left-only td{background:var(--del)}.field.right-only td{background:var(--add)}.focus-empty{padding:12px!important}.message-focus{padding:3px 8px 10px}.message-focus>.header-card:first-child{margin-top:8px}@media(max-width:900px){.raw-pair{grid-template-columns:1fr}.field-table th:first-child{width:28%}}
 </style></head>
 <body><main>
 <h1>SIP Compare</h1>
 <div class="mu">SIP-aware comparison: message alignment, header matching, generated-identifier masking, IPv4/IPv6 fragment handling, and inline differences. Everything runs locally in the browser.</div>
 <div class="grid" id="panels"></div>
 <div class="bar">
- <label><input type="checkbox" id="mask" checked> Ignore generated identifiers (Call-ID, Via branch, From/To tag, SDP o= IDs)</label>
- <label><input type="checkbox" id="norm" checked> Normalize parameter/list order</label>
+ <label><input type="checkbox" id="mask" checked> RFC-generated identifiers are non-focus fields</label>
+ <label><input type="checkbox" id="norm" checked> Normalize RFC-allowed parameter/list order</label>
  <label><input type="checkbox" id="only"> Only changed headers/lines</label>
  <label>Ignore headers: <input type="text" id="ign" value="Date" size="22"></label>
 </div>
@@ -93,41 +96,139 @@ function pkt(p,st){
 function tcpMsgs(f,st){const b0=f.s[0].seq,s=f.s.map(x=>({...x,r:(x.seq-b0)|0})).sort((a,b)=>a.r-b.r),parts=[],map=[];let pos=0;for(const x of s){const off=x.r-s[0].r;if(off+x.pay.length<=pos)continue;const c=off<pos?x.pay.subarray(pos-off):x.pay;map.push([pos,x.ts]);parts.push(c);pos+=c.length}const buf=new Uint8Array(pos);let q=0;for(const c of parts){buf.set(c,q);q+=c.length}const str=new TextDecoder('latin1').decode(buf);let p=0;while(p<str.length){while(str[p]==='\r'||str[p]==='\n')p++;if(!SIP.test(str.slice(p,p+80)))break;const he=str.indexOf('\r\n\r\n',p);if(he<0)break;const cl=+((str.slice(p,he).match(/^(?:content-length|l)[ \t]*:[ \t]*(\d+)/im)||[])[1]||0),e=Math.min(he+4+cl,str.length),ts=(map.filter(m=>m[0]<=p).pop()||map[0])[1];st.msgs.push({raw:new TextDecoder().decode(buf.subarray(p,e)),ts,proto:'TCP',src:f.src,dst:f.dst});p=e}}
 function extract(pk){const st={fr:new Map,tcp:new Map,fr6:new Map,msgs:[],tls:0};for(const p of pk){try{pkt(p,st)}catch{}}for(const f of st.tcp.values())tcpMsgs(f,st);st.msgs.sort((a,b)=>a.ts-b.ts);return st}
 
-/* ---------- semantic comparison ---------- */
-function opts(){return{mask:$('mask').checked,norm:$('norm').checked,only:$('only').checked,ign:new Set($('ign').value.toLowerCase().split(/[ ,\s]+/).filter(Boolean).map(x=>C[x]||x))}}
-function dynamicSpans(k,v){const out=[];const add=(start,end,type)=>out.push({start,end,type});if(k==='call-id'){add(0,v.length,'call-id');return out}let m;if(k==='via'){const r=/\bbranch\s*=\s*([^;>\s,]+)/ig;while((m=r.exec(v)))add(m.index+m[0].lastIndexOf(m[1]),m.index+m[0].lastIndexOf(m[1])+m[1].length,'branch')}if(k==='from'||k==='to'){const r=/\btag\s*=\s*([^;>\s,]+)/ig;while((m=r.exec(v)))add(m.index+m[0].lastIndexOf(m[1]),m.index+m[0].lastIndexOf(m[1])+m[1].length,'tag')}if(k==='sdp'){const r=/^o=(\S+)\s+(\d+)\s+(\d+)/;m=r.exec(v);if(m){add(m.index+m[0].indexOf(m[2]),m.index+m[0].indexOf(m[2])+m[2].length,'origin-id');add(m.index+m[0].indexOf(m[3]),m.index+m[0].indexOf(m[3])+m[3].length,'origin-ver')}}return out.sort((a,b)=>a.start-b.start)}
-function lex(s){return String(s??'').match(/"(?:\\.|[^"\\])*"|<[^>]*>|[A-Za-z0-9._:+@\/-]+|\s+|./g)||[]}
-function semanticSegments(k,v,mask=true){const s=String(v??''),sp=mask?dynamicSpans(k,s):[],out=[];let p=0;for(const z of sp){if(z.start>p){const part=s.slice(p,z.start);for(const t of lex(part))out.push({key:t.trim()===''?'@ws':t,raw:t,ignored:false})}out.push({key:'@dyn:'+z.type,raw:s.slice(z.start,z.end),ignored:true});p=z.end}if(p<s.length)for(const t of lex(s.slice(p)))out.push({key:t.trim()===''?'@ws':t,raw:t,ignored:false});return out}
-function normalizeHeader(k,v,o){let x=String(v??'').trim().replace(/[ \t]+/g,' ');if(k!=='sdp'&&o.norm){const items=splitList(x).map(one=>{const p=splitSemi(one);if(p.length<2)return p[0]||'';const head=p.shift();p.sort((a,b)=>a.localeCompare(b,undefined,{sensitivity:'base'}));return [head,...p].join(';')});if(SET_HEADERS.has(k))items.sort((a,b)=>a.localeCompare(b,undefined,{sensitivity:'base'}));x=items.join(', ')}else x=x.replace(/\s+/g,' ');if(o.mask){if(k==='call-id')x='@CALL-ID@';else if(k==='via')x=x.replace(/\bbranch\s*=\s*[^;>\s,]+/ig,'branch=@BRANCH@');else if(k==='from'||k==='to')x=x.replace(/\btag\s*=\s*[^;>\s,]+/ig,'tag=@TAG@');else if(k==='sdp')x=x.replace(/^o=(\S+)\s+\d+\s+\d+/,'o=$1 @OID@ @OIDV@')}return x}
-function tokenScore(a,b,o,k){const A=semanticSegments(k,a,o.mask).filter(x=>x.key!=='@ws').map(x=>x.key),B=semanticSegments(k,b).filter(x=>x.key!=='@ws').map(x=>x.key);if(!A.length&&!B.length)return 1;const ca=new Map(A.map(x=>[x,(A.indexOf(x))]));let hit=0;for(const x of B)if(ca.has(x)){hit++;ca.delete(x)}return hit/(Math.max(A.length,B.length)||1)}
-function alignEntries(L,R,k,o,ordered){
- const lk=v=>normalizeHeader(k,v,o);const out=[];const used=new Set();
- if(L.length===1&&R.length===1)return[{l:L[0],r:R[0]}];
- if(!ordered){for(let i=0;i<L.length;i++){const key=lk(L[i]);const j=R.findIndex((b,n)=>!used.has(n)&&lk(b)===key);if(j>=0){used.add(j);out.push({l:L[i],r:R[j]})}}
-  const left=L.filter(a=>!out.some(x=>x.l===a)),right=R.map((b,j)=>({b,j})).filter(x=>!used.has(x.j)).map(x=>x.b);while(left.length||right.length){if(!left.length){out.push({l:undefined,r:right.shift()});continue}if(!right.length){out.push({l:left.shift(),r:undefined});continue}let bi=-1,bs=0;for(let j=0;j<right.length;j++){const sc=tokenScore(left[0],right[j],o,k);if(sc>bs){bs=sc;bi=j}}if(bs>=0.35)out.push({l:left.shift(),r:right.splice(bi,1)[0]});else out.push({l:left.shift(),r:undefined})}return out}
- const n=L.length,m=R.length,d=Array.from({length:n+1},()=>Array(m+1).fill(0));for(let i=n-1;i>=0;i--)for(let j=m-1;j>=0;j--){const exact=lk(L[i])===lk(R[j]),sim=tokenScore(L[i],R[j],o,k),ms=exact?8:(sim>=0.35?3+sim*3:-8);d[i][j]=Math.max(ms+d[i+1][j+1],d[i+1][j]-2,d[i][j+1]-2)}let i=0,j=0;while(i<n&&j<m){const exact=lk(L[i])===lk(R[j]),sim=tokenScore(L[i],R[j],o,k),ms=exact?8:(sim>=0.35?3+sim*3:-8);if(ms+d[i+1][j+1]>=d[i+1][j]-2&&ms+d[i+1][j+1]>=d[i][j+1]-2){if(ms<0){out.push({l:L[i++],r:undefined})}else out.push({l:L[i++],r:R[j++]})}else if(d[i+1][j]>=d[i][j+1])out.push({l:L[i++],r:undefined});else out.push({l:undefined,r:R[j++]})}while(i<n)out.push({l:L[i++],r:undefined});while(j<m)out.push({l:undefined,r:R[j++]});return out
+/* ---------- RFC-structured semantic comparison ---------- */
+const SCHEMA={
+ 'via':{rfc:'RFC 3261 §20.42; RFC 3581',kind:'via',params:['ttl','maddr','received','branch','rport','generic'],dynamic:['branch']},
+ 'from':{rfc:'RFC 3261 §20.6',kind:'nameaddr',params:['tag','generic'],dynamic:['tag']},
+ 'to':{rfc:'RFC 3261 §20.39',kind:'nameaddr',params:['tag','generic'],dynamic:['tag']},
+ 'contact':{rfc:'RFC 3261 §20.10',kind:'nameaddr',params:['q','expires','generic']},
+ 'route':{rfc:'RFC 3261 §20.34',kind:'nameaddr',params:['generic']},
+ 'record-route':{rfc:'RFC 3261 §20.30',kind:'nameaddr',params:['generic']},
+ 'path':{rfc:'RFC 3327',kind:'nameaddr',params:['generic']},
+ 'service-route':{rfc:'RFC 3608',kind:'nameaddr',params:['generic']},
+ 'reply-to':{rfc:'RFC 3261 §20.33',kind:'nameaddr',params:['generic']},
+ 'refer-to':{rfc:'RFC 3515 §2.1',kind:'nameaddr',params:['generic']},
+ 'referred-by':{rfc:'RFC 3892',kind:'nameaddr',params:['generic']},
+ 'p-asserted-identity':{rfc:'RFC 3325 §9.1',kind:'identity',params:['none']},
+ 'p-preferred-identity':{rfc:'RFC 3325 §9.2',kind:'identity',params:['none']},
+ 'p-associated-uri':{rfc:'RFC 3455 §5.1 / RFC 7315',kind:'nameaddr',params:['generic']},
+ 'p-called-party-id':{rfc:'RFC 3455 §5.2 / RFC 7315',kind:'nameaddr',params:['generic']},
+ 'p-visited-network-id':{rfc:'RFC 3455 §5.3 / RFC 7315',kind:'generic-list',params:['generic']},
+ 'p-access-network-info':{rfc:'RFC 3455 §5.4 / RFC 7315',kind:'generic-list',params:['generic']},
+ 'p-charging-function-addresses':{rfc:'RFC 3455 §5.5 / RFC 7315',kind:'params',params:['ccf','ecf','generic']},
+ 'p-charging-vector':{rfc:'RFC 3455 §5.6 / RFC 7315',kind:'params',params:['icid-value','icid-generated-at','orig-ioi','term-ioi','transit-ioi','related-icid','generic']},
+ 'call-id':{rfc:'RFC 3261 §20.8',kind:'callid',params:['none'],dynamic:['id']},
+ 'cseq':{rfc:'RFC 3261 §20.16',kind:'cseq',params:['none']},
+ 'rseq':{rfc:'RFC 3262 §7.1',kind:'number',params:['none']},
+ 'rack':{rfc:'RFC 3262 §7.2',kind:'rack',params:['none']},
+ 'max-forwards':{rfc:'RFC 3261 §20.22',kind:'number',params:['none']},
+ 'content-length':{rfc:'RFC 3261 §20.14',kind:'number',params:['none']},
+ 'content-type':{rfc:'RFC 3261 §20.7',kind:'mediatype',params:['media-type-params']},
+ 'content-encoding':{rfc:'RFC 3261 §20.12',kind:'token-list',params:['none']},
+ 'content-language':{rfc:'RFC 3261 §20.13',kind:'token-list',params:['none']},
+ 'supported':{rfc:'RFC 3261 §20.37',kind:'token-list',params:['option-tag']},
+ 'require':{rfc:'RFC 3261 §20.32',kind:'token-list',params:['option-tag']},
+ 'proxy-require':{rfc:'RFC 3261 §20.29',kind:'token-list',params:['option-tag']},
+ 'unsupported':{rfc:'RFC 3261 §20.40',kind:'token-list',params:['option-tag']},
+ 'allow':{rfc:'RFC 3261 §20.5',kind:'token-list',params:['method']},
+ 'allow-events':{rfc:'RFC 6665 §8.2.2',kind:'token-list',params:['event-type']},
+ 'accept':{rfc:'RFC 3261 §20.1',kind:'mediatype-list',params:['media-range-params']},
+ 'accept-encoding':{rfc:'RFC 3261 §20.2',kind:'token-param-list',params:['qvalue','generic']},
+ 'accept-language':{rfc:'RFC 3261 §20.3',kind:'token-param-list',params:['qvalue','generic']},
+ 'session-expires':{rfc:'RFC 4028 §4',kind:'delta-params',params:['refresher','generic']},
+ 'min-se':{rfc:'RFC 4028 §5',kind:'delta-params',params:['generic']},
+ 'expires':{rfc:'RFC 3261 §20.19',kind:'number',params:['none']},
+ 'retry-after':{rfc:'RFC 3261 §20.33',kind:'delta-params',params:['duration','generic']},
+ 'reason':{rfc:'RFC 3326 §2',kind:'protocol-params',params:['cause','text','generic']},
+ 'event':{rfc:'RFC 6665 §8.2.1',kind:'event',params:['id','generic']},
+ 'subscription-state':{rfc:'RFC 6665 §8.2.3',kind:'substate',params:['reason','expires','retry-after','generic']},
+ 'identity':{rfc:'RFC 8224 §4',kind:'identity-header',params:['info','alg','ppt','generic']},
+ 'security-client':{rfc:'RFC 3329 §2.2',kind:'security-list',params:['q','d-alg','d-qop','d-ver','generic']},
+ 'security-server':{rfc:'RFC 3329 §2.2',kind:'security-list',params:['q','d-alg','d-qop','d-ver','generic']},
+ 'security-verify':{rfc:'RFC 3329 §2.2',kind:'security-list',params:['q','d-alg','d-qop','d-ver','generic']},
+ 'privacy':{rfc:'RFC 3325 §9.3',kind:'token-list',params:['privacy-type']},
+ 'request-disposition':{rfc:'RFC 3841',kind:'token-list',params:['disposition-token']}
+};
+const LIST2=new Set(['via','route','record-route','path','service-route','contact','accept','accept-encoding','accept-language','allow','supported','require','proxy-require','unsupported','allow-events','p-asserted-identity','p-preferred-identity','p-associated-uri','p-called-party-id','p-visited-network-id','security-client','security-server','security-verify','privacy','reason','event']);
+const ORDERED2=new Set(['via','route','record-route','path','service-route']);
+const $q=s=>String(s??'').replace(/[&<>\"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','\\':'&#92;','"':'&quot;'}[c]));
+function splitTop2(v,sep=','){
+ const o=[];let ang=0,par=0,q=0,s=0;
+ for(let i=0;i<v.length;i++){const c=v[i];if(c==='"'&&v[i-1]!=='\\')q^=1;else if(!q){if(c==='<')ang++;else if(c==='>')ang--;else if(c==='(')par++;else if(c===')')par--;else if(c===sep&&ang===0&&par===0){o.push(v.slice(s,i).trim());s=i+1}}}
+ o.push(v.slice(s).trim());return o.filter(Boolean)
 }
-function headerGroups(m){const g=new Map();for(const h of m.hs){const e=g.get(h.k)||g.set(h.k,{n:h.n,v:[]}).get(h.k);e.v.push(...(LIST.has(h.k)?splitList(h.v):[h.v]))}return g}
-function lcsOps(A,B){const n=A.length,m=B.length;if(n*m>100000)return A===B?[['=',A]]:[['-',A],['+',B]];const d=Array.from({length:n+1},()=>new Uint16Array(m+1));for(let i=n-1;i>=0;i--)for(let j=m-1;j>=0;j--)d[i][j]=A[i]===B[j]?d[i+1][j+1]+1:Math.max(d[i+1][j],d[i][j+1]);const o=[];let i=0,j=0;while(i<n&&j<m){if(A[i]===B[j])o.push(['=',i++,j++]);else if(d[i+1][j]>=d[i][j+1])o.push(['-',i++]);else o.push(['+',j++])}while(i<n)o.push(['-',i++]);while(j<m)o.push(['+',j++]);return o}
-function inlineDiff(k,a,b,mask){if(a===undefined)return{l:'<span class="empty">—</span>',r:''};if(b===undefined)return{l:'',r:'<span class="empty">—</span>'};const A=semanticSegments(k,a,mask),B=semanticSegments(k,b,mask),ops=lcsOps(A.map(x=>x.key),B.map(x=>x.key));let L='',R='';const emit=(side,seg,cls)=>{const x=E(seg.raw);if(seg.ignored&&cls==='same')return'<span class="diff-ign" title="ignored generated value">'+x+'</span>';if(cls==='del')return'<span class="diff-del">'+x+'</span>';if(cls==='add')return'<span class="diff-add">'+x+'</span>';return x};for(const op of ops){if(op[0]==='='){L+=emit('l',A[op[1]],'same');R+=emit('r',B[op[2]],'same')}else if(op[0]==='-')L+=emit('l',A[op[1]],'del');else R+=emit('r',B[op[1]],'add')}return{l:L||'<span class="empty">—</span>',r:R||'<span class="empty">—</span>'}}
-function row(k,name,l,r,o,idx){const ign=o.ign.has(k),nl=l===undefined?undefined:normalizeHeader(k,l,o),nr=r===undefined?undefined:normalizeHeader(k,r,o),same=l!==undefined&&r!==undefined&&nl===nr;return{k,name,l,r,st:l===undefined?'R':r===undefined?'L':same?'same':ign?'ig':'chg',diff:l!==undefined&&r!==undefined&&!same&&!ign?inlineDiff(k,l,r,o.mask):null,idx}}
-function secs(t){const m=new Map(),c={};let cur=/^v=0/m.test(t)?'session':'body';for(const l of t.split('\n').map(x=>x.trim()).filter(Boolean)){if(cur!=='body'&&l.startsWith('m=')){const k=l.slice(2).split(/\s+/)[0];c[k]=(c[k]||0)+1;cur='m='+k+(c[k]>1?'#'+c[k]:'')} (m.get(cur)||m.set(cur,[]).get(cur)).push(l)}return m}
-function messageSig(m){const r=m.start.match(/^SIP\/2\.0\s+(\d{3})/);const c=m.cseqMethod||'';const ct=(m.hs.find(h=>h.k==='content-type')||{v:''}).v.toLowerCase();if(r){const rs=(m.hs.find(h=>h.k==='rseq')||{}).v||'';const tt=(m.hs.find(h=>h.k==='to')||{}).v||'';return{kind:'R',status:r[1],method:c,rseq:!!rs,tag:/\btag\s*=/.test(tt),ct}}const q=m.start.match(/^([A-Z]+)\s+\S+\s+SIP\/2\.0$/);return{kind:'Q',method:q?q[1]:'',status:'',rseq:false,tag:/\btag\s*=/.test((m.hs.find(h=>h.k==='to')||{}).v||''),ct}}
-function messageScore(a,b){const A=messageSig(a),B=messageSig(b);if(A.kind!==B.kind)return-99;let s=1;if(A.kind==='Q'){s+=A.method===B.method?5:-5;s+=A.method&&B.method?(A.method===B.method?4:-4):0}else{s+=A.status===B.status?5:0;s+=A.method&&B.method?(A.method===B.method?4:-4):0;s+=A.rseq===B.rseq?2:0}s+=A.tag===B.tag?1:0;s+=A.ct===B.ct?1:0;return s}
-function alignMessages(A,B){const n=A.length,m=B.length,d=Array.from({length:n+1},()=>Array(m+1).fill(0));for(let i=n-1;i>=0;i--)for(let j=m-1;j>=0;j--){const s=messageScore(A[i],B[j]);d[i][j]=Math.max(s>=5?s+d[i+1][j+1]:-999,d[i+1][j]-3,d[i][j+1]-3)}const out=[];let i=0,j=0;while(i<n&&j<m){const s=messageScore(A[i],B[j]);if(s>=5&&s+d[i+1][j+1]>=d[i+1][j]-3&&s+d[i+1][j+1]>=d[i][j+1]-3)out.push([A[i++],B[j++]]);else if(d[i+1][j]>=d[i][j+1])out.push([A[i++],null]);else out.push([null,B[j++]])}while(i<n)out.push([A[i++],null]);while(j<m)out.push([null,B[j++]]);return out}
-function compareMessage(a,b,o){const out=[];const sl=a.start.replace(/\s+/g,' ').trim(),sr=b.start.replace(/\s+/g,' ').trim();out.push({name:'Start-Line',k:'start',rows:[row('start','Start-Line',a.start,b.start,o,0)]});const A=headerGroups(a),B=headerGroups(b);for(const k of new Set([...A.keys(),...B.keys()])){const x=A.get(k),y=B.get(k),pairs=alignEntries(x?x.v:[],y?y.v:[],k,o,ORDERED.has(k));out.push({name:(x||y).n,k,rows:pairs.map((p,i)=>row(k,(x||y).n+(pairs.length>1?' ['+(i+1)+']':''),p.l,p.r,o,i))})}
- const sa=secs(a.body),sb=secs(b.body);for(const k of new Set([...sa.keys(),...sb.keys()])){const L=sa.get(k)||[],R=sb.get(k)||[],pairs=alignEntries(L,R,'sdp',o,true);out.push({name:k==='body'?'Body':'SDP '+k,k:'sdp',rows:pairs.map((p,i)=>row('sdp',k==='body'?'Body':'SDP '+k,p.l,p.r,o,i))})}return out}
+function splitSemi2(v){return splitTop2(v,';')}
+function parseParamList2(parts){
+ const out=[];for(const p of parts){const m=p.match(/^\s*([^=\s]+)(?:\s*=\s*(.*))?$/);if(!m)out.push({name:p.trim().toLowerCase(),value:'',raw:p,valid:false});else out.push({name:m[1].toLowerCase(),value:(m[2]??'').trim(),raw:p,valid:true})}return out
+}
+function paramFields(params,allowed,dyn){
+ const fields=[];for(const p of params){const known=allowed.includes(p.name)||allowed.includes('generic');fields.push({key:'param:'+p.name,name:p.name+(known?'':' [not RFC-known]'),value:p.value||'(flag)',ignored:dyn?.includes(p.name)||false,kind:'param',known})}return fields
+}
+function parseUri2(uri){
+ const s=uri.trim(),parts=splitSemi2(s),base=parts.shift()||'';const q=base.indexOf('?');let core=base,query='';if(q>=0){core=base.slice(0,q);query=base.slice(q+1)}
+ const fs=[{key:'uri',name:'URI',value:core,kind:'uri'}];for(const p of parts){const m=p.match(/^([^=]+)(?:=(.*))?$/);fs.push({key:'uri-param:'+(m?m[1].trim().toLowerCase():p.toLowerCase()),name:'URI param '+(m?m[1].trim():'?'),value:m?(m[2]??'(flag)'):p,kind:'uri-param'})}if(query)fs.push({key:'uri-headers',name:'URI header part',value:'?'+query,kind:'uri-header'});return fs
+}
+function parseNameAddr2(v,header){
+ let s=v.trim(),display='',uri='',tail='';const lt=s.indexOf('<'),gt=s.lastIndexOf('>');
+ if(lt>=0&&gt>lt){display=s.slice(0,lt).trim();uri=s.slice(lt+1,gt).trim();tail=s.slice(gt+1).trim()}else{const p=splitSemi2(s);uri=p.shift()||'';tail=p.join(';')}
+ const fs=[];if(display)fs.push({key:'display',name:'Display name',value:display,kind:'display'});fs.push(...parseUri2(uri));const params=tail?paramFields(parseParamList2(splitSemi2(tail)),(SCHEMA[header]?.params||['generic']),SCHEMA[header]?.dynamic):[];fs.push(...params);return fs
+}
+function parseHeader2(k,v){
+ const s=String(v??'').trim(), sc=SCHEMA[k]||{rfc:'Generic SIP header / extension',kind:'generic',params:['generic']};
+ if(sc.kind==='via'){
+  const p=splitSemi2(s),base=(p.shift()||'').trim(),m=base.match(/^(\S+)\s+(.+)$/),fs=[];if(m){fs.push({key:'sent-protocol',name:'Sent protocol',value:m[1],kind:'base'});fs.push({key:'sent-by',name:'Sent-by',value:m[2],kind:'base'})}else fs.push({key:'value',name:'Value',value:base,kind:'base'});fs.push(...paramFields(parseParamList2(p),['ttl','maddr','received','branch','rport','generic'],['branch']));return fs
+ }
+ if(sc.kind==='identity'){if(s.includes('<'))return parseNameAddr2(s,k);return parseUri2(s)} if(sc.kind==='nameaddr'){return parseNameAddr2(s,k)}
+ if(sc.kind==='callid')return[{key:'call-id',name:'Call-ID',value:s,kind:'identifier',ignored:true}];
+ if(sc.kind==='cseq'){const m=s.match(/^(\d+)\s+(\S+)$/);return m?[{key:'cseq-number',name:'CSeq number',value:m[1],kind:'number'},{key:'cseq-method',name:'CSeq method',value:m[2],kind:'token'}]:[{key:'value',name:'Value',value:s,kind:'base'}]}
+ if(sc.kind==='rack'){const m=s.match(/^(\d+)\s+(\d+)\s+(\S+)$/);return m?[{key:'rack-rseq',name:'RAck RSeq',value:m[1],kind:'number'},{key:'rack-cseq',name:'RAck CSeq',value:m[2],kind:'number'},{key:'rack-method',name:'RAck method',value:m[3],kind:'token'}]:[{key:'value',name:'Value',value:s,kind:'base'}]}
+ if(sc.kind==='number')return[{key:'number',name:'Number',value:s,kind:'number'}];
+ if(sc.kind==='token-list')return splitTop2(s).map((x,i)=>({key:'item:'+x.toLowerCase(),name:'Item '+(i+1),value:x,kind:'token'}));
+ if(sc.kind==='generic-list')return splitTop2(s).flatMap((x,i)=>{const p=splitSemi2(x),base=p.shift()||'';return[{key:'item:'+i,name:'Item '+(i+1),value:base,kind:'token'},...paramFields(parseParamList2(p),sc.params)]});
+ if(sc.kind==='params'||sc.kind==='delta-params'||sc.kind==='protocol-params'||sc.kind==='event'||sc.kind==='substate'||sc.kind==='identity-header'){
+  const p=splitSemi2(s),base=p.shift()||'',bm=base.match(/^([^=;\s]+)=(.*)$/),fs=[];
+  if(sc.kind==='params' && bm) fs.push({key:'param:'+bm[1].toLowerCase(),name:bm[1],value:bm[2],kind:'param',known:sc.params.includes(bm[1].toLowerCase())||sc.params.includes('generic')});
+  else fs.push({key:'base',name:sc.kind==='delta-params'?'Interval':sc.kind==='protocol-params'?'Protocol':sc.kind==='event'?'Event package':sc.kind==='substate'?'State':sc.kind==='identity-header'?'Signed identity':'Value',value:base,kind:'base'});
+  fs.push(...paramFields(parseParamList2(p),sc.params,sc.dynamic));return fs
+ }
+ if(sc.kind==='mediatype'||sc.kind==='mediatype-list'||sc.kind==='token-param-list'||sc.kind==='security-list'){
+  const vals=splitTop2(s),fs=[];vals.forEach((x,i)=>{const p=splitSemi2(x),base=p.shift()||'';fs.push({key:'item-base:'+i,name:sc.kind==='mediatype'?'Media type':'Item '+(i+1),value:base,kind:'base'});fs.push(...paramFields(parseParamList2(p),sc.params))});return fs
+ }
+ if(sc.kind==='generic'){
+  const p=splitSemi2(s),base=p.shift()||'',fs=[{key:'base',name:'Value',value:base,kind:'base'}];fs.push(...paramFields(parseParamList2(p),['generic']));return fs
+ }
+ return[{key:'value',name:'Value',value:s,kind:'base'}]
+}
+function schemaText(k){const s=SCHEMA[k];if(!s)return'Generic SIP extension';return s.rfc+' · allowed parameters: '+s.params.join(', ')}
+function fieldMap(fields){const m=new Map();for(const f of fields){let k=f.key;if(m.has(k)){let n=2;while(m.has(k+'#'+n))n++;k=k+'#'+n}m.set(k,{...f,key:k})}return m}
+function valNorm(v){return String(v??'').replace(/[ \t]+/g,' ').trim()}
+function normalizedFields(fields,ignoreOrder){const m=fieldMap(fields);const arr=[...m.values()];if(ignoreOrder)arr.sort((a,b)=>a.key.localeCompare(b.key));return arr}
+function compareStructured(k,a,b,o){
+ const A=normalizedFields(parseHeader2(k,a),!ORDERED2.has(k)),B=normalizedFields(parseHeader2(k,b),!ORDERED2.has(k));const am=fieldMap(A),bm=fieldMap(B),keys=[];for(const x of am.keys())if(!keys.includes(x))keys.push(x);for(const x of bm.keys())if(!keys.includes(x))keys.push(x);
+ const rows=[];for(const key of keys){const x=am.get(key),y=bm.get(key),ignored=(x?.ignored||y?.ignored||false);const xv=x?.value,yv=y?.value;const dynIgnored=o.mask&&(x?.ignored||y?.ignored);let st;if(x===undefined)st='R';else if(y===undefined)st='L';else if(dynIgnored)st='ignored';else if(valNorm(xv)===valNorm(yv))st='same';else st='chg';rows.push({key,name:(x||y).name,l:xv,r:yv,st,ignored,kind:(x||y).kind})}
+ return{rows,changed:rows.filter(x=>['chg','L','R'].includes(x.st)).length,ignored:rows.filter(x=>x.st==='ignored').length}
+}
+function signature2(k,v,o){const fs=parseHeader2(k,v);return fs.filter(x=>!(o.mask&&x.ignored)).map(x=>x.key+'='+valNorm(x.value)).join('|')}
+function valueSimilarity2(k,a,b,o){const A=parseHeader2(k,a).filter(x=>!(o.mask&&x.ignored)).map(x=>x.key),B=parseHeader2(k,b).filter(x=>!(o.mask&&x.ignored)).map(x=>x.key),bs=new Set(B);let hit=A.filter(x=>bs.has(x)).length;return hit/Math.max(A.length,B.length,1)}
+function alignValues2(L,R,k,o){if(L.length===1&&R.length===1)return[{l:L[0],r:R[0]}];const out=[],used=new Set();for(const a of L){const sig=signature2(k,a,o);let j=R.findIndex((b,n)=>!used.has(n)&&signature2(k,b,o)===sig);if(j<0&&!ORDERED2.has(k)){let best=-1,score=.35;for(let n=0;n<R.length;n++)if(!used.has(n)){const z=valueSimilarity2(k,a,R[n],o);if(z>score){score=z;best=n}}j=best}if(j>=0){used.add(j);out.push({l:a,r:R[j]})}else out.push({l:a,r:undefined})}for(let n=0;n<R.length;n++)if(!used.has(n))out.push({l:undefined,r:R[n]});return out}
+function headerGroups2(m){const g=new Map();for(const h of m.hs){const e=g.get(h.k)||g.set(h.k,{n:h.n,v:[]}).get(h.k);e.v.push(...(LIST2.has(h.k)?splitTop2(h.v):[h.v]))}return g}
+function diffStart(a,b){return valNorm(a)===valNorm(b)?'same':'chg'}
+function compareMessage2(a,b,o){const out=[];out.push({name:'Start-Line',k:'start',rfc:'RFC 3261 §7',headerRaw:[a.start,b.start],fields:[{name:'Start line',l:a.start,r:b.start,st:diffStart(a.start,b.start)}],changed:diffStart(a.start,b.start)==='chg'?1:0});const A=headerGroups2(a),B=headerGroups2(b);for(const k of new Set([...A.keys(),...B.keys()])){const x=A.get(k),y=B.get(k),pairs=alignValues2(x?x.v:[],y?y.v:[],k,o);for(let i=0;i<pairs.length;i++){const p=pairs[i],c=(p.l!==undefined&&p.r!==undefined)?compareStructured(k,p.l,p.r,o):{rows:[{key:'value',name:'Complete header value',l:p.l,r:p.r,st:p.l===undefined?'R':'L'}],changed:1,ignored:0};if(o.ign.has(k)){for(const f of c.rows){if(f.st!=='L'&&f.st!=='R')f.st='ignored';}c.changed=0;c.userIgnored=true}out.push({name:(x||y).n+(pairs.length>1?' ['+(i+1)+']':''),k,rfc:schemaText(k)+(c.userIgnored?' · USER IGNORED':'') ,raw:[p.l,p.r],fields:c.rows,changed:c.changed,ignored:c.ignored,userIgnored:c.userIgnored})}}
+ const sa=secs(a.body),sb=secs(b.body);for(const k of new Set([...sa.keys(),...sb.keys()])){const L=sa.get(k)||[],R=sb.get(k)||[],pairs=alignValues2(L,R,'generic',o);for(let i=0;i<pairs.length;i++){const p=pairs[i],c=p.l!==undefined&&p.r!==undefined?compareStructured('generic',p.l,p.r,o):{rows:[{key:'line',name:'SDP line',l:p.l,r:p.r,st:p.l===undefined?'R':'L'}],changed:1,ignored:0};out.push({name:k==='body'?'Body':'SDP '+k,k:'generic',rfc:'SDP / RFC 4566',raw:[p.l,p.r],fields:c.rows,changed:c.changed,ignored:c.ignored})}}
+ return out}
 
 /* ---------- UI ---------- */
-const S={},DIFF=new Set(['chg','L','R']);
+const S={},DIFF3=new Set(['chg','L','R']);
 const view=s=>S[s].all.filter(m=>!S[s].call||m.callId===S[s].call);const tm=m=>m.ts?new Date(m.ts*1000).toISOString().slice(11,23):'';
 function info(s){const x=S[s],v=view(s),u=v.filter(m=>m.proto==='UDP').length,t=v.filter(m=>m.proto==='TCP').length;$('i'+s).textContent=v.length+' SIP messages'+(u+t?' (UDP '+u+', TCP '+t+')':'')+(x.tls?'. '+x.tls+' TLS packets found: encrypted SIP cannot be decoded.':'')+(x.all.length?'':'. No SIP found.')}
-function setSide(s,raws,name,tls){S[s]={name,all:raws.map(r=>parseMsg(r.raw,r)),call:'',tls};const cs=new Map();S[s].all.forEach(m=>cs.set(m.callId,(cs.get(m.callId)||0)+1));$('n'+s).textContent=name;$('c'+s).innerHTML='<option value="">All calls ('+cs.size+')</option>'+[...cs].map(([k,n])=>'<option value="'+E(k)+'">'+E(k.slice(0,48))+' ('+n+' msgs)</option>').join('');info(s);run()}
+function setSide(s,raws,name,tls){S[s]={name,all:raws.map(r=>parseMsg(r.raw,r)),call:'',tls};const cs=new Map();S[s].all.forEach(m=>cs.set(m.callId,(cs.get(m.callId)||0)+1));$('n'+s).textContent=name;$('c'+s).innerHTML='<option value="">All calls ('+cs.size+')</option>'+[...cs].map(([k,n])=>'<option value="'+E(k)+'">'+E(k.slice(0,48))+' ('+n+' msgs)</option>').join('');info(s);run3()}
 async function onFile(s,f){try{const b=await f.arrayBuffer(),m=b.byteLength>3?new DataView(b).getUint32(0):0;if([0x0a0d0d0a,0xa1b2c3d4,0xd4c3b2a1,0xa1b23c4d,0x4d3cb2a1].includes(m)){const st=extract(readCap(b));setSide(s,st.msgs,f.name,st.tls)}else setSide(s,textMsgs(new TextDecoder().decode(b)),f.name,0)}catch(e){$('i'+s).textContent='Could not read file: '+e.message}}
-function renderRow(x,y,o){if(y.st==='ig'){if(o.only)return'';return'<tr class="ig"><th>'+E(y.name)+'</th><td>'+E(y.l??'—')+'</td><td>'+E(y.r??'—')+'</td></tr>'}if(y.st==='same'){if(o.only)return'';return'<tr class="same"><th>'+E(y.name)+'</th><td>'+E(y.l)+'</td><td>'+E(y.r)+'</td></tr>'}if(y.st==='chg'){return'<tr class="chg"><th>'+E(y.name)+'</th><td>'+y.diff.l+'</td><td>'+y.diff.r+'</td></tr>'}if(y.st==='L'){return'<tr class="L"><th>'+E(y.name)+'</th><td>'+E(y.l)+'</td><td><span class="empty">—</span></td></tr>'}return'<tr class="R"><th>'+E(y.name)+'</th><td><span class="empty">—</span></td><td>'+E(y.r)+'</td></tr>'}
-function run(){if(!S.L||!S.R){$('out').innerHTML='';return}const o=opts(),pr=alignMessages(view('L'),view('R'));let same=0,diff=0,l=0,r=0,h='';pr.forEach(([a,b],i)=>{if(!a||!b){const m=a||b,lbl=a?'left':'right';a?l++:r++;h+='<details class="m" open><summary><b>#'+(i+1)+'</b> '+E(m.label)+'<span class="only">only in '+lbl+'</span><span class="mu">'+tm(m)+'</span></summary><pre>'+E(m.raw)+'</pre></details>';return}const sc=compareMessage(a,b,o),n=sc.reduce((t,x)=>t+x.rows.filter(y=>DIFF.has(y.st)).length,0);n?diff++:same++;const rows=sc.map(sec=>{const rr=sec.rows.filter(y=>!o.only||DIFF.has(y.st));if(!rr.length)return'';return'<tr class="section"><th colspan="3">'+E(sec.name)+'</th></tr>'+rr.map(y=>renderRow(sec,y,o)).join('')}).join('');h+='<details class="m"'+(n?' open':'')+'><summary><b>#'+(i+1)+'</b> '+E(a.label)+' vs '+E(b.label)+(n?'<span class="bd">'+n+' difference'+(n>1?'s':'')+'</span>':'<span class="ok">identical</span>')+'<span class="mu">'+tm(a)+' | '+tm(b)+'</span></summary><table><tr><th>Header / line</th><th class="mu">'+E(S.L.name)+'</th><th class="mu">'+E(S.R.name)+'</th></tr>'+rows+'</table></details>'});$('sum').textContent=pr.length+' message slots: '+same+' identical, '+diff+' with differences, '+l+' only left, '+r+' only right; Left '+view('L').length+' SIP, Right '+view('R').length+' SIP.';$('out').innerHTML=h}
+function escVal(v){return v===undefined||v===null?'<span class="empty">—</span>':$q(v)}
+function renderField3(f,o){let badge='';if(f.st==='chg')badge='<span class="focus-badge">FOCUS</span>';if(f.st==='ignored')badge='<span class="ignored-badge">RFC-GENERATED / IGNORED</span>';if(f.st==='L')badge='<span class="left-badge">LEFT ONLY</span>';if(f.st==='R')badge='<span class="right-badge">RIGHT ONLY</span>';const cls=f.st==='chg'?' focus':f.st==='ignored'?' ignored':(f.st==='L'?' left-only':f.st==='R'?' right-only':'');if(o.focus&&f.st==='same')return'';return'<tr class="field'+cls+'"><td class="fieldname">'+$q(f.name)+'</td><td>'+escVal(f.l)+'</td><td>'+escVal(f.r)+'</td><td>'+badge+'</td></tr>'}
+function renderSection3(sec,o){const n=sec.changed,headBadge=n?'<span class="count-badge">'+n+' changed field'+(n>1?'s':'')+'</span>':'<span class="same-badge">no changed fields</span>';const ignored=sec.fields.filter(f=>f.st==='ignored').length?'<span class="ignored-count">'+sec.fields.filter(f=>f.st==='ignored').length+' generated/ignored</span>':'';const userIgnored=sec.userIgnored?'<span class="ignored-badge">USER IGNORED</span>':'';const label='<div class="hdr-title"><strong>'+E(sec.name)+'</strong>'+userIgnored+headBadge+ignored+'</div><div class="rfc-note">'+E(sec.rfc)+'</div><div class="raw-pair"><div><span class="side-label">LEFT</span>'+escVal(sec.raw?.[0])+'</div><div><span class="side-label">RIGHT</span>'+escVal(sec.raw?.[1])+'</div></div>';let rows=sec.fields.map(f=>renderField3(f,o)).join('');if(!rows&&o.focus)rows='<tr><td colspan="4" class="empty focus-empty">No changed fields in this header.</td></tr>';return'<details class="header-card"'+(n?' open':'')+'><summary>'+label+'</summary><table class="field-table"><thead><tr><th>RFC field / parameter</th><th>'+E(S.L.name)+'</th><th>'+E(S.R.name)+'</th><th>Focus</th></tr></thead><tbody>'+rows+'</tbody></table></details>'}
+function run3(){if(!S.L||!S.R){$('out').innerHTML='';return}const o={mask:$('mask').checked,norm:$('norm').checked,focus:$('focus').checked,ign:new Set($('ign').value.toLowerCase().split(/[ ,\s]+/).filter(Boolean).map(x=>C[x]||x))};const pr=alignMessages(view('L'),view('R'));let same=0,diff=0,l=0,r=0,h='';pr.forEach(([a,b],i)=>{if(!a||!b){const m=a||b,lbl=a?'LEFT':'RIGHT';a?l++:r++;h+='<details class="m" open><summary><b>#'+(i+1)+'</b> '+E(m.label)+'<span class="only">ONLY '+lbl+'</span><span class="mu">'+tm(m)+'</span></summary><pre>'+E(m.raw)+'</pre></details>';return}const sc=compareMessage2(a,b,o);const n=sc.reduce((t,x)=>t+x.changed,0);n?diff++:same++;const secsHtml=sc.map(sec=>renderSection3(sec,o)).join('');h+='<details class="m"'+(n?' open':'')+'><summary><b>#'+(i+1)+'</b> '+E(a.label)+' vs '+E(b.label)+(n?'<span class="bd">'+n+' focused difference'+(n>1?'s':'')+'</span>':'<span class="ok">IDENTICAL</span>')+'<span class="mu">'+tm(a)+' | '+tm(b)+'</span></summary><div class="message-focus">'+secsHtml+'</div></details>'});$('sum').innerHTML=pr.length+' message slots: <b>'+same+'</b> identical, <b>'+diff+'</b> with focused differences, <b>'+l+'</b> only left, <b>'+r+'</b> only right.';$('out').innerHTML=h}
 function save(s){const t=view(s).map(m=>m.raw.replace(/\r\n/g,'\n').trim()).join('\n\n')+'\n',a=document.createElement('a');a.href=URL.createObjectURL(new Blob([t],{type:'text/plain'}));a.download=S[s].name.replace(/\.[^.]+$/,'')+'.sip.txt';a.click()}
 $('panels').innerHTML=['L','R'].map(s=>'<section class="pn"><h2>'+(s==='L'?'Left':'Right')+'</h2><label class="btn">Upload pcap, pcapng or text<input type="file" id="f'+s+'" accept=".pcap,.pcapng,.cap,.txt,.log,.sip" hidden></label> <span class="mu" id="n'+s+'">No file loaded</span><details><summary class="mu">Or paste SIP text</summary><textarea id="t'+s+'" rows="6" placeholder="Paste one or more SIP messages"></textarea><button data-p="'+s+'">Load text</button></details><div class="bar"><select id="c'+s+'"><option value="">All calls</option></select><button data-v="'+s+'">Save as plain text</button></div><div class="mu" id="i'+s+'"></div></section>').join('');
-for(const s of['L','R']){$('f'+s).onchange=e=>{const f=e.target.files[0];e.target.value='';f&&onFile(s,f)};$('c'+s).onchange=e=>{S[s].call=e.target.value;info(s);run()}}
-document.addEventListener('click',e=>{const d=e.target.dataset;if(d.p)setSide(d.p,textMsgs($('t'+d.p).value),'pasted text',0);if(d.v&&S[d.v])save(d.v)});['mask','norm','only','ign'].forEach(i=>$(i).oninput=run);
+for(const s of['L','R']){$('f'+s).onchange=e=>{const f=e.target.files[0];e.target.value='';f&&onFile(s,f)};$('c'+s).onchange=e=>{S[s].call=e.target.value;info(s);run3()}}
+document.addEventListener('click',e=>{const d=e.target.dataset;if(d.p)setSide(d.p,textMsgs($('t'+d.p).value),'pasted text',0);if(d.v&&S[d.v])save(d.v)});['mask','norm','focus','ign'].forEach(i=>$(i).oninput=run3);
 </script></main></body></html>
