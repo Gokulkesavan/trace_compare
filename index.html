@@ -1,261 +1,133 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>SIP Compare</title>
+<title>SIP Compare v2</title>
 <style>
-:root{--bg:#fff;--fg:#1c2128;--mu:#6b7280;--bd:#d8dee4;--pn:#f6f8fa;--add:#d3f0dc;--del:#fbd9d9;--chg:#fff0b8;--ac:#2f6fed}
-@media(prefers-color-scheme:dark){:root{--bg:#0f1317;--fg:#e6e8eb;--mu:#8b95a1;--bd:#2b333c;--pn:#171c22;--add:#173a26;--del:#4a1f22;--chg:#4a3f14;--ac:#4f86f0}}
-*{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--fg);font:14px/1.45 system-ui,sans-serif}
-main{max-width:1280px;margin:0 auto;padding:16px}
+:root{--bg:#fff;--fg:#1c2128;--mu:#6b7280;--bd:#d8dee4;--pn:#f6f8fa;--add:#d3f0dc;--del:#fbd9d9;--chg:#fff0b8;--ign:#eef1f4;--ac:#2f6fed;--hdr:#eaf0f7}
+@media(prefers-color-scheme:dark){:root{--bg:#0f1317;--fg:#e6e8eb;--mu:#8b95a1;--bd:#2b333c;--pn:#171c22;--add:#173a26;--del:#4a1f22;--chg:#4a3f14;--ign:#252b32;--ac:#4f86f0;--hdr:#18222c}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:14px/1.45 system-ui,sans-serif}main{max-width:1500px;margin:0 auto;padding:16px}
 h1{font-size:20px;margin:0 0 4px}.mu{color:var(--mu)}
-.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:14px 0}
-@media(max-width:800px){.grid{grid-template-columns:1fr}}
-.pn{background:var(--pn);border:1px solid var(--bd);border-radius:8px;padding:12px}
-.pn h2{font-size:14px;margin:0 0 8px}
-.btn,button,select,input[type=text]{font:inherit;border:1px solid var(--bd);border-radius:6px;background:var(--bg);color:var(--fg);padding:5px 10px;cursor:pointer}
-.btn{background:var(--ac);color:#fff;border-color:var(--ac);display:inline-block}
-:focus-visible{outline:2px solid var(--ac);outline-offset:2px}
-textarea{width:100%;font:12px ui-monospace,Menlo,Consolas,monospace;background:var(--bg);color:var(--fg);border:1px solid var(--bd);border-radius:6px;margin:6px 0}
-.bar{display:flex;flex-wrap:wrap;gap:14px;align-items:center;margin:8px 0}
-select{max-width:100%}
-details.m{border:1px solid var(--bd);border-radius:8px;margin:8px 0;overflow:hidden}
-details.m>summary{padding:8px 12px;cursor:pointer;background:var(--pn)}
-.bd{background:var(--chg);border-radius:10px;padding:0 8px;font-size:12px;margin:0 6px}
-table{width:100%;border-collapse:collapse;table-layout:fixed}
-th,td{border-top:1px solid var(--bd);padding:3px 8px;vertical-align:top;font:12px/1.4 ui-monospace,Menlo,Consolas,monospace;white-space:pre-wrap;word-break:break-all;text-align:left}
-th:first-child{width:16%;font-weight:600}
-tr.chg td{background:var(--chg)}tr.L td:nth-of-type(1){background:var(--del)}tr.R td:nth-of-type(2){background:var(--add)}
-tr.mk td,tr.ig td{color:var(--mu)}tr.ig td{font-style:italic}
-.od tr.same,.od tr.mk,.od tr.ig{display:none}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:14px 0}@media(max-width:800px){.grid{grid-template-columns:1fr}}
+.pn{background:var(--pn);border:1px solid var(--bd);border-radius:8px;padding:12px}.pn h2{font-size:14px;margin:0 0 8px}
+.btn,button,select,input[type=text]{font:inherit;border:1px solid var(--bd);border-radius:6px;background:var(--bg);color:var(--fg);padding:5px 10px;cursor:pointer}.btn{background:var(--ac);color:#fff;border-color:var(--ac);display:inline-block}
+:focus-visible{outline:2px solid var(--ac);outline-offset:2px}textarea{width:100%;font:12px ui-monospace,Menlo,Consolas,monospace;background:var(--bg);color:var(--fg);border:1px solid var(--bd);border-radius:6px;margin:6px 0}
+.bar{display:flex;flex-wrap:wrap;gap:14px;align-items:center;margin:8px 0}select{max-width:100%}
+details.m{border:1px solid var(--bd);border-radius:8px;margin:8px 0;overflow:hidden}details.m>summary{padding:8px 12px;cursor:pointer;background:var(--pn)}
+.bd{background:var(--chg);border-radius:10px;padding:0 8px;font-size:12px;margin:0 6px}.ok{background:var(--add);border-radius:10px;padding:0 8px;font-size:12px;margin:0 6px}.only{background:var(--del);border-radius:10px;padding:0 8px;font-size:12px;margin:0 6px}
+table{width:100%;border-collapse:collapse;table-layout:fixed}th,td{border-top:1px solid var(--bd);padding:5px 8px;vertical-align:top;font:12px/1.4 ui-monospace,Menlo,Consolas,monospace;white-space:pre-wrap;word-break:break-word;text-align:left}th:first-child{width:18%;font-weight:600}
+tr.hdr td,tr.hdr th{background:var(--hdr)}tr.same td{background:transparent}tr.chg td:nth-child(2),tr.L td:nth-child(2){background:var(--del)}tr.chg td:nth-child(3),tr.R td:nth-child(3){background:var(--add)}tr.ig td{background:var(--ign);color:var(--mu)}
+tr.section th{background:var(--hdr);font-weight:700;color:var(--fg)}
+.diff-del{background:var(--del);text-decoration:line-through;border-radius:2px}.diff-add{background:var(--add);border-radius:2px}.diff-ign{background:var(--ign);color:var(--mu);border-radius:2px}
+.empty{color:var(--mu)}.legend{display:flex;flex-wrap:wrap;gap:10px;margin:7px 0 10px;font-size:12px}.legend span{padding:2px 7px;border-radius:10px}.legend .a{background:var(--add)}.legend .d{background:var(--del)}.legend .c{background:var(--chg)}.legend .i{background:var(--ign);color:var(--mu)}
 pre{margin:0;padding:8px 12px;font:12px ui-monospace,Menlo,Consolas,monospace;white-space:pre-wrap}
 </style></head>
 <body><main>
 <h1>SIP Compare</h1>
-<div class="mu">Header-aware SIP diff (RFC 3261). Runs in your browser; nothing is uploaded.</div>
+<div class="mu">SIP-aware comparison: message alignment, header matching, generated-identifier masking, IPv4/IPv6 fragment handling, and inline differences. Everything runs locally in the browser.</div>
 <div class="grid" id="panels"></div>
 <div class="bar">
-<label><input type="checkbox" id="mask" checked> Mask dynamic values (branch, tag, Call-ID, CSeq number, SDP o= ids)</label>
-<label><input type="checkbox" id="norm" checked> Ignore whitespace and parameter order</label>
-<label><input type="checkbox" id="od"> Only differences</label>
-<label>Ignore headers: <input type="text" id="ign" value="Content-Length, Date" size="26"></label>
+ <label><input type="checkbox" id="mask" checked> Ignore generated identifiers (Call-ID, Via branch, From/To tag, SDP o= IDs)</label>
+ <label><input type="checkbox" id="norm" checked> Normalize parameter/list order</label>
+ <label><input type="checkbox" id="only"> Only changed headers/lines</label>
+ <label>Ignore headers: <input type="text" id="ign" value="Date" size="22"></label>
 </div>
+<div class="legend"><span class="a">added / right-only</span><span class="d">removed / left-only</span><span class="c">changed</span><span class="i">ignored/generated value</span></div>
 <div id="sum" class="mu">Load a capture or text on both sides to compare.</div><div id="out"></div>
-</main>
 <script>
-const $=i=>document.getElementById(i),E=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const $=i=>document.getElementById(i),E=s=>String(s).replace(/[&<>\"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const C={i:'call-id',m:'contact',e:'content-encoding',l:'content-length',c:'content-type',f:'from',s:'subject',k:'supported',t:'to',v:'via',o:'event',u:'allow-events',r:'refer-to',b:'referred-by',x:'session-expires',a:'accept-contact',j:'reject-contact',d:'request-disposition',y:'identity',n:'identity-info'};
-const SIP=/^(SIP\/2\.0 \d{3}|[A-Z]+ \S+ SIP\/2\.0)/;
-const LIST=new Set(['via','route','record-route','path','history-info','supported','allow','require','proxy-require','unsupported','contact','accept','accept-encoding','accept-language','allow-events','p-asserted-identity']);
-const ORD=new Set(['via','route','record-route','path','history-info']);
+const SIP=/^(SIP\/2\.0 \d{3}|[A-Z]+\s+\S+\s+SIP\/2\.0)/;
+const LIST=new Set(['via','route','record-route','path','service-route','history-info','supported','allow','require','proxy-require','unsupported','contact','accept','accept-encoding','accept-language','allow-events','p-asserted-identity','privacy','join','replaces']);
+const ORDERED=new Set(['via','route','record-route','path','service-route','history-info']);
+const SET_HEADERS=new Set(['supported','allow','require','proxy-require','unsupported','accept','accept-encoding','accept-language','allow-events','contact','p-asserted-identity','privacy']);
 const rd16=(d,o)=>d[o]<<8|d[o+1],rd32=(d,o)=>((d[o]<<24)|(d[o+1]<<16)|(d[o+2]<<8)|d[o+3])>>>0;
-const ip4=(d,o)=>d.subarray(o,o+4).join('.'),ip6=(d,o)=>{const a=[];for(let i=0;i<16;i+=2)a.push(rd16(d,o+i).toString(16));return a.join(':')};
+const ip4=(d,o)=>d.subarray(o,o+4).join('.');
+const ip6=(d,o)=>{const a=[];for(let i=0;i<16;i+=2)a.push(rd16(d,o+i).toString(16));return a.join(':')};
 
 /* ---------- SIP parsing ---------- */
-function splitList(v){const o=[];let d=0,q=0,s=0;for(let i=0;i<v.length;i++){const c=v[i];if(c=='"')q^=1;else if(!q){if(c=='<')d++;else if(c=='>')d--;else if(c==','&&!d){o.push(v.slice(s,i).trim());s=i+1}}}o.push(v.slice(s).trim());return o.filter(Boolean)}
+function splitList(v){const o=[];let d=0,q=0,s=0;for(let i=0;i<v.length;i++){const c=v[i];if(c=='"'&&v[i-1]!='\\')q^=1;else if(!q){if(c=='<')d++;else if(c=='>')d--;else if(c==','&&!d){o.push(v.slice(s,i).trim());s=i+1}}}o.push(v.slice(s).trim());return o.filter(Boolean)}
+function splitSemi(v){const o=[];let d=0,q=0,s=0;for(let i=0;i<v.length;i++){const c=v[i];if(c=='"'&&v[i-1]!='\\')q^=1;else if(!q){if(c=='<')d++;else if(c=='>')d--;else if(c==';'&&!d){o.push(v.slice(s,i).trim());s=i+1}}}o.push(v.slice(s).trim());return o.filter(Boolean)}
 function parseMsg(raw,meta){
  raw=raw.replace(/\r\n/g,'\n').replace(/^\n+/,'');
  const i=raw.indexOf('\n\n'),head=i<0?raw:raw.slice(0,i),body=i<0?'':raw.slice(i+2),ls=head.split('\n'),start=ls.shift().trim(),hs=[];
- for(const l of ls){
-  if(/^[ \t]/.test(l)&&hs.length){hs[hs.length-1].v+=' '+l.trim();continue}
-  const c=l.indexOf(':');if(c<1)continue;
-  const n=l.slice(0,c).trim();let k=n.toLowerCase();if(C[k])k=C[k];
-  hs.push({k,n:n.length===1?k:n,v:l.slice(c+1).trim()});
- }
- const rs=start.match(/^SIP\/2\.0 (\d{3})/),cs=((hs.find(h=>h.k==='cseq')||{v:''}).v.split(/\s+/)[1])||'';
- return{...meta,start,hs,body,label:rs?rs[1]+(cs?' ('+cs+')':''):start.split(' ')[0],callId:(hs.find(h=>h.k==='call-id')||{v:'(none)'}).v};
+ for(const l of ls){if(/^[ \t]/.test(l)&&hs.length){hs[hs.length-1].v+=' '+l.trim();continue}const c=l.indexOf(':');if(c<1)continue;const n=l.slice(0,c).trim();let k=n.toLowerCase();if(C[k])k=C[k];hs.push({k,n:n.length===1?k:n,v:l.slice(c+1).trim()})}
+ const rs=start.match(/^SIP\/2\.0\s+(\d{3})/),cm=((hs.find(h=>h.k==='cseq')||{v:''}).v.trim().split(/\s+/)[1])||'';
+ return{...meta,start,hs,body,label:rs?rs[1]+' ('+(cm||'?')+')':((start.match(/^([A-Z]+)\s+/)||[])[1]||start),callId:(hs.find(h=>h.k==='call-id')||{v:'(none)'}).v,cseqMethod:cm};
 }
-function textMsgs(t){
- t=t.replace(/\r\n/g,'\n');
- const ix=[...t.matchAll(/^(?:SIP\/2\.0 \d{3}.*|[A-Z]+ \S+ SIP\/2\.0)[ \t]*$/gm)].map(m=>m.index);
- return ix.map((s,i)=>({raw:t.slice(s,ix[i+1]??t.length).trim()+'\n',proto:'text'}));
-}
+function textMsgs(t){t=t.replace(/\r\n/g,'\n');const ix=[...t.matchAll(/^(?:SIP\/2\.0\s+\d{3}.*|[A-Z]+\s+\S+\s+SIP\/2\.0)[ \t]*$/gm)].map(m=>m.index);return ix.map((s,i)=>({raw:t.slice(s,ix[i+1]??t.length).trim()+'\n',proto:'text'}));}
 
 /* ---------- pcap / pcapng ---------- */
 function readCap(buf){
  const d=new Uint8Array(buf),v=new DataView(buf),m=v.getUint32(0),pk=[];
  if(m===0x0a0d0d0a){
   const le=v.getUint32(8,true)===0x1a2b3c4d,ifs=[];let o=0;
-  while(o+12<=d.length){
-   const t=v.getUint32(o,le),l=v.getUint32(o+4,le);if(l<12)break;
-   if(t===1){let res=1e-6;
-    for(let q=o+16;q+4<=o+l-4;){const c=v.getUint16(q,le),n=v.getUint16(q+2,le);if(c===0)break;if(c===9){const b=d[q+4];res=b&128?2**-(b&127):10**-b}q+=4+((n+3)&~3)}
-    ifs.push({link:v.getUint16(o+8,le),res});
-   }else if(t===6){
-    const f=ifs[v.getUint32(o+8,le)]||{link:1,res:1e-6},cl=v.getUint32(o+20,le);
-    pk.push({link:f.link,ts:(v.getUint32(o+12,le)*4294967296+v.getUint32(o+16,le))*f.res,data:d.subarray(o+28,o+28+cl)});
-   }
-   o+=l;
-  }
+  while(o+12<=d.length){const t=v.getUint32(o,le),l=v.getUint32(o+4,le);if(l<12||o+l>d.length)break;if(t===1){let res=1e-6;for(let q=o+16;q+4<=o+l-4;){const c=v.getUint16(q,le),n=v.getUint16(q+2,le);if(c===0)break;if(c===9&&n){const b=d[q+4];res=b&128?2**-(b&127):10**-b}q+=4+((n+3)&~3)}ifs.push({link:v.getUint16(o+8,le),res})}else if(t===6){const f=ifs[v.getUint32(o+8,le)]||{link:1,res:1e-6},cl=v.getUint32(o+20,le);pk.push({link:f.link,ts:(v.getUint32(o+12,le)*4294967296+v.getUint32(o+16,le))*f.res,data:d.subarray(o+28,o+28+cl)})}o+=l}
  }else{
-  const le=m===0xd4c3b2a1||m===0x4d3cb2a1,ns=m===0xa1b23c4d||m===0x4d3cb2a1;
-  if(!(le||ns||m===0xa1b2c3d4))throw Error('Unrecognised capture format');
-  const link=v.getUint32(20,le);let o=24;
-  while(o+16<=d.length){const cl=v.getUint32(o+8,le);pk.push({link,ts:v.getUint32(o,le)+v.getUint32(o+4,le)/(ns?1e9:1e6),data:d.subarray(o+16,o+16+cl)});o+=16+cl}
+  const le=m===0xd4c3b2a1||m===0x4d3cb2a1,ns=m===0xa1b23c4d||m===0x4d3cb2a1;if(!(le||ns||m===0xa1b2c3d4))throw Error('Unrecognised capture format');const link=v.getUint32(20,le);let o=24;while(o+16<=d.length){const cl=v.getUint32(o+8,le);pk.push({link,ts:v.getUint32(o,le)+v.getUint32(o+4,le)/(ns?1e9:1e6),data:d.subarray(o+16,o+16+cl)});o+=16+cl}
  }
  return pk;
 }
+function completeFrag6(st,key){
+ const a=st.fr6.get(key);if(!a)return null;let end=-1;
+ for(const x of a){if(!x.more)end=Math.max(end,x.off+x.pl.length)} if(end<0)return null;
+ let covered=0;for(const x of [...a].sort((p,q)=>p.off-q.off)){if(x.off>covered)return null;covered=Math.max(covered,x.off+x.pl.length)} if(covered<end)return null;
+ const b=new Uint8Array(end);for(const x of a)b.set(x.pl,x.off);st.fr6.delete(key);return{nx:a[0].nx,pl:b,ts:Math.min(...a.map(x=>x.ts))};
+}
 function pkt(p,st){
  const d=p.data;let o=0,et,src,dst,pr,pl;
- switch(p.link){
-  case 1:o=14;et=rd16(d,12);while(et===0x8100||et===0x88a8){et=rd16(d,o+2);o+=4}break;
-  case 113:o=16;et=rd16(d,14);break;
-  case 276:o=20;et=rd16(d,0);break;
-  case 0:case 108:o=4;
-  case 101:case 12:case 228:case 229:et=(d[o]>>4)===6?0x86dd:0x0800;break;
-  default:return;
- }
+ switch(p.link){case 1:o=14;et=rd16(d,12);while(et===0x8100||et===0x88a8){et=rd16(d,o+2);o+=4}break;case 113:o=16;et=rd16(d,14);break;case 276:o=20;et=rd16(d,0);break;case 0:case 108:o=4;case 101:case 12:case 228:case 229:et=(d[o]>>4)===6?0x86dd:0x0800;break;default:return}
  if(et===0x0800){
-  const ih=(d[o]&15)*4,tot=rd16(d,o+2)||d.length-o,id=rd16(d,o+4),fl=rd16(d,o+6),off=(fl&0x1fff)*8,mf=fl&0x2000;
-  pr=d[o+9];src=ip4(d,o+12);dst=ip4(d,o+16);pl=d.subarray(o+ih,o+tot);
-  if(mf||off){ // IPv4 fragment reassembly
-   const k=src+dst+id+pr,e=st.fr.get(k)||{p:[],end:0};st.fr.set(k,e);
-   e.p.push({off,pl});if(!mf)e.end=off+pl.length;if(!e.end)return;
-   e.p.sort((a,b)=>a.off-b.off);let c=0;
-   for(const x of e.p){if(x.off>c)return;c=Math.max(c,x.off+x.pl.length)}
-   if(c<e.end)return;
-   const b=new Uint8Array(e.end);for(const x of e.p)b.set(x.pl,x.off);pl=b;st.fr.delete(k);
-  }
+  if(o+20>d.length)return;const ih=(d[o]&15)*4,tot=rd16(d,o+2)||d.length-o,id=rd16(d,o+4),fl=rd16(d,o+6),off=(fl&0x1fff)*8,mf=fl&0x2000;pr=d[o+9];src=ip4(d,o+12);dst=ip4(d,o+16);pl=d.subarray(o+ih,o+tot);
+  if(mf||off){const k=src+'|'+dst+'|'+id+'|'+pr,e=st.fr.get(k)||{p:[],end:0};st.fr.set(k,e);e.p.push({off,pl});if(!mf)e.end=off+pl.length;if(!e.end)return;e.p.sort((a,b)=>a.off-b.off);let c=0;for(const x of e.p){if(x.off>c)return;c=Math.max(c,x.off+x.pl.length)}if(c<e.end)return;const b=new Uint8Array(e.end);for(const x of e.p)b.set(x.pl,x.off);pl=b;st.fr.delete(k)}
  }else if(et===0x86dd){
-  let nx=d[o+6];src=ip6(d,o+8);dst=ip6(d,o+24);pl=d.subarray(o+40,o+40+rd16(d,o+4));
-  while(nx===0||nx===43||nx===60){const l=(pl[1]+1)*8;nx=pl[0];pl=pl.subarray(l)}
+  if(o+40>d.length)return;let nx=d[o+6];src=ip6(d,o+8);dst=ip6(d,o+24);pl=d.subarray(o+40,o+40+rd16(d,o+4));
+  while(nx===0||nx===43||nx===60){if(pl.length<8)return;const l=(pl[1]+1)*8;if(l>pl.length)return;nx=pl[0];pl=pl.subarray(l)}
+  if(nx===44){
+   if(pl.length<8)return;const nn=pl[0],fm=rd16(pl,2),off=((fm>>3)&0x1fff)*8,more=(fm&1)!==0,ident=rd32(pl,4),key=src+'|'+dst+'|'+ident+'|'+nn,e=st.fr6.get(key)||[];e.push({off,more,pl:pl.subarray(8),ts:p.ts,nx:nn});st.fr6.set(key,e);const z=completeFrag6(st,key);if(!z)return;nx=z.nx;pl=z.pl
+  }
+  if(nx===51){if(pl.length<2)return;const l=(pl[1]+2)*4;if(l>pl.length)return;nx=pl[0];pl=pl.subarray(l)}
   pr=nx;
  }else return;
- if(pr===17){
-  const t=new TextDecoder().decode(pl.subarray(8,rd16(pl,4)));
-  if(SIP.test(t.trimStart()))st.msgs.push({raw:t,ts:p.ts,proto:'UDP',src:src+':'+rd16(pl,0),dst:dst+':'+rd16(pl,2)});
- }else if(pr===6){
-  const pay=pl.subarray((pl[12]>>4)*4);
-  if(!pay.length)return;
-  if((pay[0]===22||pay[0]===23)&&pay[1]===3)st.tls++;
-  const sp=rd16(pl,0),dp=rd16(pl,2),k=src+':'+sp+'>'+dst+':'+dp,f=st.tcp.get(k)||{src:src+':'+sp,dst:dst+':'+dp,s:[]};
-  st.tcp.set(k,f);f.s.push({seq:rd32(pl,4),pay,ts:p.ts});
- }
+ if(pr===17){if(pl.length<8)return;const t=new TextDecoder().decode(pl.subarray(8,rd16(pl,4)));if(SIP.test(t.trimStart()))st.msgs.push({raw:t,ts:p.ts,proto:'UDP',src:src+':'+rd16(pl,0),dst:dst+':'+rd16(pl,2)})}
+ else if(pr===6){if(pl.length<20)return;const pay=pl.subarray((pl[12]>>4)*4);if(!pay.length)return;if((pay[0]===22||pay[0]===23)&&pay[1]===3)st.tls++;const sp=rd16(pl,0),dp=rd16(pl,2),k=src+':'+sp+'>'+dst+':'+dp,f=st.tcp.get(k)||{src:src+':'+sp,dst:dst+':'+dp,s:[]};st.tcp.set(k,f);f.s.push({seq:rd32(pl,4),pay,ts:p.ts})}
 }
-function tcpMsgs(f,st){ // reorder, drop retransmits, frame by Content-Length
- const b0=f.s[0].seq,s=f.s.map(x=>({...x,r:(x.seq-b0)|0})).sort((a,b)=>a.r-b.r),parts=[],map=[];let pos=0;
- for(const x of s){const off=x.r-s[0].r;if(off+x.pay.length<=pos)continue;const c=off<pos?x.pay.subarray(pos-off):x.pay;map.push([pos,x.ts]);parts.push(c);pos+=c.length}
- const buf=new Uint8Array(pos);let q=0;for(const c of parts){buf.set(c,q);q+=c.length}
- const str=new TextDecoder('latin1').decode(buf);let p=0;
- while(p<str.length){
-  while(str[p]==='\r'||str[p]==='\n')p++;
-  if(!SIP.test(str.slice(p,p+80)))break;
-  const he=str.indexOf('\r\n\r\n',p);if(he<0)break;
-  const cl=+((str.slice(p,he).match(/^(?:content-length|l)[ \t]*:[ \t]*(\d+)/im)||[])[1]||0),e=Math.min(he+4+cl,str.length);
-  const ts=(map.filter(m=>m[0]<=p).pop()||map[0])[1];
-  st.msgs.push({raw:new TextDecoder().decode(buf.subarray(p,e)),ts,proto:'TCP',src:f.src,dst:f.dst});p=e;
- }
-}
-function extract(pk){
- const st={fr:new Map,tcp:new Map,msgs:[],tls:0};
- for(const p of pk){try{pkt(p,st)}catch{}}
- for(const f of st.tcp.values())tcpMsgs(f,st);
- st.msgs.sort((a,b)=>a.ts-b.ts);return st;
-}
+function tcpMsgs(f,st){const b0=f.s[0].seq,s=f.s.map(x=>({...x,r:(x.seq-b0)|0})).sort((a,b)=>a.r-b.r),parts=[],map=[];let pos=0;for(const x of s){const off=x.r-s[0].r;if(off+x.pay.length<=pos)continue;const c=off<pos?x.pay.subarray(pos-off):x.pay;map.push([pos,x.ts]);parts.push(c);pos+=c.length}const buf=new Uint8Array(pos);let q=0;for(const c of parts){buf.set(c,q);q+=c.length}const str=new TextDecoder('latin1').decode(buf);let p=0;while(p<str.length){while(str[p]==='\r'||str[p]==='\n')p++;if(!SIP.test(str.slice(p,p+80)))break;const he=str.indexOf('\r\n\r\n',p);if(he<0)break;const cl=+((str.slice(p,he).match(/^(?:content-length|l)[ \t]*:[ \t]*(\d+)/im)||[])[1]||0),e=Math.min(he+4+cl,str.length),ts=(map.filter(m=>m[0]<=p).pop()||map[0])[1];st.msgs.push({raw:new TextDecoder().decode(buf.subarray(p,e)),ts,proto:'TCP',src:f.src,dst:f.dst});p=e}}
+function extract(pk){const st={fr:new Map,tcp:new Map,fr6:new Map,msgs:[],tls:0};for(const p of pk){try{pkt(p,st)}catch{}}for(const f of st.tcp.values())tcpMsgs(f,st);st.msgs.sort((a,b)=>a.ts-b.ts);return st}
 
-/* ---------- comparison ---------- */
-const opts=()=>({mask:$('mask').checked,norm:$('norm').checked,ign:new Set($('ign').value.toLowerCase().split(/[,\s]+/).filter(Boolean).map(x=>C[x]||x))});
-function nv(k,v,o){
- if(o.mask){
-  if(k==='call-id')return'*';
-  if(k==='cseq')v=v.replace(/^\d+/,'#');
-  v=v.replace(/\b(branch|tag)=[^;>\s,]+/gi,'$1=*');
-  if(k==='sdp')v=v.replace(/^o=(\S+) \d+ \d+/,'o=$1 # #');
- }
- if(o.norm){
-  if(k==='sdp')v=v.replace(/\s+/g,' ');
-  else{const p=v.split(';').map(x=>x.trim().replace(/\s+/g,' '));v=[p.shift(),...p.sort()].join(';')}
- }
- return v;
+/* ---------- semantic comparison ---------- */
+function opts(){return{mask:$('mask').checked,norm:$('norm').checked,only:$('only').checked,ign:new Set($('ign').value.toLowerCase().split(/[ ,\s]+/).filter(Boolean).map(x=>C[x]||x))}}
+function dynamicSpans(k,v){const out=[];const add=(start,end,type)=>out.push({start,end,type});if(k==='call-id'){add(0,v.length,'call-id');return out}let m;if(k==='via'){const r=/\bbranch\s*=\s*([^;>\s,]+)/ig;while((m=r.exec(v)))add(m.index+m[0].lastIndexOf(m[1]),m.index+m[0].lastIndexOf(m[1])+m[1].length,'branch')}if(k==='from'||k==='to'){const r=/\btag\s*=\s*([^;>\s,]+)/ig;while((m=r.exec(v)))add(m.index+m[0].lastIndexOf(m[1]),m.index+m[0].lastIndexOf(m[1])+m[1].length,'tag')}if(k==='sdp'){const r=/^o=(\S+)\s+(\d+)\s+(\d+)/;m=r.exec(v);if(m){add(m.index+m[0].indexOf(m[2]),m.index+m[0].indexOf(m[2])+m[2].length,'origin-id');add(m.index+m[0].indexOf(m[3]),m.index+m[0].indexOf(m[3])+m[3].length,'origin-ver')}}return out.sort((a,b)=>a.start-b.start)}
+function lex(s){return String(s??'').match(/"(?:\\.|[^"\\])*"|<[^>]*>|[A-Za-z0-9._:+@\/-]+|\s+|./g)||[]}
+function semanticSegments(k,v,mask=true){const s=String(v??''),sp=mask?dynamicSpans(k,s):[],out=[];let p=0;for(const z of sp){if(z.start>p){const part=s.slice(p,z.start);for(const t of lex(part))out.push({key:t.trim()===''?'@ws':t,raw:t,ignored:false})}out.push({key:'@dyn:'+z.type,raw:s.slice(z.start,z.end),ignored:true});p=z.end}if(p<s.length)for(const t of lex(s.slice(p)))out.push({key:t.trim()===''?'@ws':t,raw:t,ignored:false});return out}
+function normalizeHeader(k,v,o){let x=String(v??'').trim().replace(/[ \t]+/g,' ');if(k!=='sdp'&&o.norm){const items=splitList(x).map(one=>{const p=splitSemi(one);if(p.length<2)return p[0]||'';const head=p.shift();p.sort((a,b)=>a.localeCompare(b,undefined,{sensitivity:'base'}));return [head,...p].join(';')});if(SET_HEADERS.has(k))items.sort((a,b)=>a.localeCompare(b,undefined,{sensitivity:'base'}));x=items.join(', ')}else x=x.replace(/\s+/g,' ');if(o.mask){if(k==='call-id')x='@CALL-ID@';else if(k==='via')x=x.replace(/\bbranch\s*=\s*[^;>\s,]+/ig,'branch=@BRANCH@');else if(k==='from'||k==='to')x=x.replace(/\btag\s*=\s*[^;>\s,]+/ig,'tag=@TAG@');else if(k==='sdp')x=x.replace(/^o=(\S+)\s+\d+\s+\d+/,'o=$1 @OID@ @OIDV@')}return x}
+function tokenScore(a,b,o,k){const A=semanticSegments(k,a,o.mask).filter(x=>x.key!=='@ws').map(x=>x.key),B=semanticSegments(k,b).filter(x=>x.key!=='@ws').map(x=>x.key);if(!A.length&&!B.length)return 1;const ca=new Map(A.map(x=>[x,(A.indexOf(x))]));let hit=0;for(const x of B)if(ca.has(x)){hit++;ca.delete(x)}return hit/(Math.max(A.length,B.length)||1)}
+function alignEntries(L,R,k,o,ordered){
+ const lk=v=>normalizeHeader(k,v,o);const out=[];const used=new Set();
+ if(L.length===1&&R.length===1)return[{l:L[0],r:R[0]}];
+ if(!ordered){for(let i=0;i<L.length;i++){const key=lk(L[i]);const j=R.findIndex((b,n)=>!used.has(n)&&lk(b)===key);if(j>=0){used.add(j);out.push({l:L[i],r:R[j]})}}
+  const left=L.filter(a=>!out.some(x=>x.l===a)),right=R.map((b,j)=>({b,j})).filter(x=>!used.has(x.j)).map(x=>x.b);while(left.length||right.length){if(!left.length){out.push({l:undefined,r:right.shift()});continue}if(!right.length){out.push({l:left.shift(),r:undefined});continue}let bi=-1,bs=0;for(let j=0;j<right.length;j++){const sc=tokenScore(left[0],right[j],o,k);if(sc>bs){bs=sc;bi=j}}if(bs>=0.35)out.push({l:left.shift(),r:right.splice(bi,1)[0]});else out.push({l:left.shift(),r:undefined})}return out}
+ const n=L.length,m=R.length,d=Array.from({length:n+1},()=>Array(m+1).fill(0));for(let i=n-1;i>=0;i--)for(let j=m-1;j>=0;j--){const exact=lk(L[i])===lk(R[j]),sim=tokenScore(L[i],R[j],o,k),ms=exact?8:(sim>=0.35?3+sim*3:-8);d[i][j]=Math.max(ms+d[i+1][j+1],d[i+1][j]-2,d[i][j+1]-2)}let i=0,j=0;while(i<n&&j<m){const exact=lk(L[i])===lk(R[j]),sim=tokenScore(L[i],R[j],o,k),ms=exact?8:(sim>=0.35?3+sim*3:-8);if(ms+d[i+1][j+1]>=d[i+1][j]-2&&ms+d[i+1][j+1]>=d[i][j+1]-2){if(ms<0){out.push({l:L[i++],r:undefined})}else out.push({l:L[i++],r:R[j++]})}else if(d[i+1][j]>=d[i][j+1])out.push({l:L[i++],r:undefined});else out.push({l:undefined,r:R[j++]})}while(i<n)out.push({l:L[i++],r:undefined});while(j<m)out.push({l:undefined,r:R[j++]});return out
 }
-const mk=(a,b,f)=>({l:a,r:b,st:a===undefined?'R':b===undefined?'L':a===b?'same':f(a)===f(b)?'mk':'chg'});
-function diffList(L,R,ord,f){
- const rows=[];
- if(ord){for(let i=0;i<Math.max(L.length,R.length);i++)rows.push(mk(L[i],R[i],f));return rows}
- const used=new Set(),pend=[];
- for(const a of L){const j=R.findIndex((b,n)=>!used.has(n)&&f(a)===f(b));if(j<0)pend.push(a);else{used.add(j);rows.push(mk(a,R[j],f))}}
- const rest=R.filter((_,n)=>!used.has(n));
- pend.forEach((a,i)=>rows.push(mk(a,rest[i],f)));
- rest.slice(pend.length).forEach(b=>rows.push(mk(undefined,b,f)));
- return rows;
-}
-function grp(m){const g=new Map();for(const h of m.hs){const e=g.get(h.k)||g.set(h.k,{n:h.n,v:[]}).get(h.k);e.v.push(...(LIST.has(h.k)?splitList(h.v):[h.v]))}return g}
-function secs(t){
- const m=new Map(),c={};let cur=/^v=0/m.test(t)?'session':'body';
- for(const l of t.split('\n').map(x=>x.trim()).filter(Boolean)){
-  if(cur!=='body'&&l.startsWith('m=')){const k=l.slice(2).split(' ')[0];c[k]=(c[k]||0)+1;cur='m='+k+(c[k]>1?'#'+c[k]:'')}
-  (m.get(cur)||m.set(cur,[]).get(cur)).push(l);
- }
- return m;
-}
-function cmp(a,b,o){
- const out=[{name:'Start-Line',rows:[mk(a.start,b.start,s=>s.replace(/\s+/g,' ').trim())]}],A=grp(a),B=grp(b);
- for(const k of new Set([...A.keys(),...B.keys()])){
-  const x=A.get(k),y=B.get(k);
-  let rows=diffList(x?x.v:[],y?y.v:[],ORD.has(k),v=>nv(k,v,o));
-  if(o.ign.has(k))rows=rows.map(r=>r.st==='chg'||r.st==='mk'?{...r,st:'ig'}:r);
-  out.push({name:(x||y).n,rows});
- }
- const sa=secs(a.body),sb=secs(b.body);
- for(const k of new Set([...sa.keys(),...sb.keys()]))out.push({name:k==='body'?'Body':'SDP '+k,rows:diffList(sa.get(k)||[],sb.get(k)||[],k==='body',v=>nv('sdp',v,o))});
- return out;
-}
-function align(A,B){ // LCS on labels: INVITE, 183 (INVITE), 180 (INVITE), PRACK, ...
- const n=A.length,m=B.length,d=Array.from({length:n+1},()=>new Int32Array(m+1));
- for(let i=n-1;i>=0;i--)for(let j=m-1;j>=0;j--)d[i][j]=A[i].label===B[j].label?d[i+1][j+1]+1:Math.max(d[i+1][j],d[i][j+1]);
- const o=[];let i=0,j=0;
- while(i<n&&j<m){if(A[i].label===B[j].label)o.push([A[i++],B[j++]]);else if(d[i+1][j]>=d[i][j+1])o.push([A[i++],null]);else o.push([null,B[j++]])}
- while(i<n)o.push([A[i++],null]);while(j<m)o.push([null,B[j++]]);
- return o;
-}
+function headerGroups(m){const g=new Map();for(const h of m.hs){const e=g.get(h.k)||g.set(h.k,{n:h.n,v:[]}).get(h.k);e.v.push(...(LIST.has(h.k)?splitList(h.v):[h.v]))}return g}
+function lcsOps(A,B){const n=A.length,m=B.length;if(n*m>100000)return A===B?[['=',A]]:[['-',A],['+',B]];const d=Array.from({length:n+1},()=>new Uint16Array(m+1));for(let i=n-1;i>=0;i--)for(let j=m-1;j>=0;j--)d[i][j]=A[i]===B[j]?d[i+1][j+1]+1:Math.max(d[i+1][j],d[i][j+1]);const o=[];let i=0,j=0;while(i<n&&j<m){if(A[i]===B[j])o.push(['=',i++,j++]);else if(d[i+1][j]>=d[i][j+1])o.push(['-',i++]);else o.push(['+',j++])}while(i<n)o.push(['-',i++]);while(j<m)o.push(['+',j++]);return o}
+function inlineDiff(k,a,b,mask){if(a===undefined)return{l:'<span class="empty">—</span>',r:''};if(b===undefined)return{l:'',r:'<span class="empty">—</span>'};const A=semanticSegments(k,a,mask),B=semanticSegments(k,b,mask),ops=lcsOps(A.map(x=>x.key),B.map(x=>x.key));let L='',R='';const emit=(side,seg,cls)=>{const x=E(seg.raw);if(seg.ignored&&cls==='same')return'<span class="diff-ign" title="ignored generated value">'+x+'</span>';if(cls==='del')return'<span class="diff-del">'+x+'</span>';if(cls==='add')return'<span class="diff-add">'+x+'</span>';return x};for(const op of ops){if(op[0]==='='){L+=emit('l',A[op[1]],'same');R+=emit('r',B[op[2]],'same')}else if(op[0]==='-')L+=emit('l',A[op[1]],'del');else R+=emit('r',B[op[1]],'add')}return{l:L||'<span class="empty">—</span>',r:R||'<span class="empty">—</span>'}}
+function row(k,name,l,r,o,idx){const ign=o.ign.has(k),nl=l===undefined?undefined:normalizeHeader(k,l,o),nr=r===undefined?undefined:normalizeHeader(k,r,o),same=l!==undefined&&r!==undefined&&nl===nr;return{k,name,l,r,st:l===undefined?'R':r===undefined?'L':same?'same':ign?'ig':'chg',diff:l!==undefined&&r!==undefined&&!same&&!ign?inlineDiff(k,l,r,o.mask):null,idx}}
+function secs(t){const m=new Map(),c={};let cur=/^v=0/m.test(t)?'session':'body';for(const l of t.split('\n').map(x=>x.trim()).filter(Boolean)){if(cur!=='body'&&l.startsWith('m=')){const k=l.slice(2).split(/\s+/)[0];c[k]=(c[k]||0)+1;cur='m='+k+(c[k]>1?'#'+c[k]:'')} (m.get(cur)||m.set(cur,[]).get(cur)).push(l)}return m}
+function messageSig(m){const r=m.start.match(/^SIP\/2\.0\s+(\d{3})/);const c=m.cseqMethod||'';const ct=(m.hs.find(h=>h.k==='content-type')||{v:''}).v.toLowerCase();if(r){const rs=(m.hs.find(h=>h.k==='rseq')||{}).v||'';const tt=(m.hs.find(h=>h.k==='to')||{}).v||'';return{kind:'R',status:r[1],method:c,rseq:!!rs,tag:/\btag\s*=/.test(tt),ct}}const q=m.start.match(/^([A-Z]+)\s+\S+\s+SIP\/2\.0$/);return{kind:'Q',method:q?q[1]:'',status:'',rseq:false,tag:/\btag\s*=/.test((m.hs.find(h=>h.k==='to')||{}).v||''),ct}}
+function messageScore(a,b){const A=messageSig(a),B=messageSig(b);if(A.kind!==B.kind)return-99;let s=1;if(A.kind==='Q'){s+=A.method===B.method?5:-5;s+=A.method&&B.method?(A.method===B.method?4:-4):0}else{s+=A.status===B.status?5:0;s+=A.method&&B.method?(A.method===B.method?4:-4):0;s+=A.rseq===B.rseq?2:0}s+=A.tag===B.tag?1:0;s+=A.ct===B.ct?1:0;return s}
+function alignMessages(A,B){const n=A.length,m=B.length,d=Array.from({length:n+1},()=>Array(m+1).fill(0));for(let i=n-1;i>=0;i--)for(let j=m-1;j>=0;j--){const s=messageScore(A[i],B[j]);d[i][j]=Math.max(s>=5?s+d[i+1][j+1]:-999,d[i+1][j]-3,d[i][j+1]-3)}const out=[];let i=0,j=0;while(i<n&&j<m){const s=messageScore(A[i],B[j]);if(s>=5&&s+d[i+1][j+1]>=d[i+1][j]-3&&s+d[i+1][j+1]>=d[i][j+1]-3)out.push([A[i++],B[j++]]);else if(d[i+1][j]>=d[i][j+1])out.push([A[i++],null]);else out.push([null,B[j++]])}while(i<n)out.push([A[i++],null]);while(j<m)out.push([null,B[j++]]);return out}
+function compareMessage(a,b,o){const out=[];const sl=a.start.replace(/\s+/g,' ').trim(),sr=b.start.replace(/\s+/g,' ').trim();out.push({name:'Start-Line',k:'start',rows:[row('start','Start-Line',a.start,b.start,o,0)]});const A=headerGroups(a),B=headerGroups(b);for(const k of new Set([...A.keys(),...B.keys()])){const x=A.get(k),y=B.get(k),pairs=alignEntries(x?x.v:[],y?y.v:[],k,o,ORDERED.has(k));out.push({name:(x||y).n,k,rows:pairs.map((p,i)=>row(k,(x||y).n+(pairs.length>1?' ['+(i+1)+']':''),p.l,p.r,o,i))})}
+ const sa=secs(a.body),sb=secs(b.body);for(const k of new Set([...sa.keys(),...sb.keys()])){const L=sa.get(k)||[],R=sb.get(k)||[],pairs=alignEntries(L,R,'sdp',o,true);out.push({name:k==='body'?'Body':'SDP '+k,k:'sdp',rows:pairs.map((p,i)=>row('sdp',k==='body'?'Body':'SDP '+k,p.l,p.r,o,i))})}return out}
 
 /* ---------- UI ---------- */
-const S={},D=new Set(['chg','L','R']);
-const view=s=>S[s].all.filter(m=>!S[s].call||m.callId===S[s].call);
-const tm=m=>m.ts?new Date(m.ts*1000).toISOString().slice(11,23):'';
-const cell=v=>v===undefined?'<span class="mu">-</span>':E(v);
-function info(s){
- const x=S[s],v=view(s),u=v.filter(m=>m.proto==='UDP').length,t=v.filter(m=>m.proto==='TCP').length;
- $('i'+s).textContent=v.length+' SIP messages'+(u+t?' (UDP '+u+', TCP '+t+')':'')+(x.tls?'. '+x.tls+' TLS packets found: encrypted SIP cannot be decoded.':'')+(x.all.length?'':'. No SIP found.');
-}
-function setSide(s,raws,name,tls){
- S[s]={name,all:raws.map(r=>parseMsg(r.raw,r)),call:'',tls};
- const cs=new Map();S[s].all.forEach(m=>cs.set(m.callId,(cs.get(m.callId)||0)+1));
- $('n'+s).textContent=name;
- $('c'+s).innerHTML='<option value="">All calls ('+cs.size+')</option>'+[...cs].map(([k,n])=>'<option value="'+E(k)+'">'+E(k.slice(0,48))+' ('+n+' msgs)</option>').join('');
- info(s);run();
-}
-async function onFile(s,f){
- try{
-  const b=await f.arrayBuffer(),m=b.byteLength>3?new DataView(b).getUint32(0):0;
-  if([0x0a0d0d0a,0xa1b2c3d4,0xd4c3b2a1,0xa1b23c4d,0x4d3cb2a1].includes(m)){const st=extract(readCap(b));setSide(s,st.msgs,f.name,st.tls)}
-  else setSide(s,textMsgs(new TextDecoder().decode(b)),f.name,0);
- }catch(e){$('i'+s).textContent='Could not read file: '+e.message}
-}
-function run(){
- $('out').className=$('od').checked?'od':'';
- if(!S.L||!S.R){$('out').innerHTML='';return}
- const o=opts(),pr=align(view('L'),view('R'));let same=0,diff=0,l=0,r=0,h='';
- pr.forEach(([a,b],i)=>{
-  if(!a||!b){const m=a||b,side=a?'left':'right';a?l++:r++;
-   h+='<details class="m"><summary><b>#'+(i+1)+'</b> '+E(m.label)+'<span class="bd">only in '+side+'</span><span class="mu">'+tm(m)+'</span></summary><pre>'+E(m.raw)+'</pre></details>';return}
-  const sc=cmp(a,b,o),n=sc.reduce((t,x)=>t+x.rows.filter(y=>D.has(y.st)).length,0);n?diff++:same++;
-  h+='<details class="m"'+(n?' open':'')+'><summary><b>#'+(i+1)+'</b> '+E(a.label)+' vs '+E(b.label)+(n?'<span class="bd">'+n+' difference'+(n>1?'s':'')+'</span>':'<span class="mu"> identical</span>')+'<span class="mu">'+tm(a)+' | '+tm(b)+'</span></summary><table><tr><th></th><th class="mu">'+E(S.L.name)+'</th><th class="mu">'+E(S.R.name)+'</th></tr>'+
-   sc.map(x=>x.rows.map((y,j)=>'<tr class="'+y.st+'"><th>'+(j?'':E(x.name))+'</th><td>'+cell(y.l)+'</td><td>'+cell(y.r)+'</td></tr>').join('')).join('')+'</table></details>';
- });
- $('sum').textContent=pr.length+' message slots: '+same+' identical, '+diff+' with differences, '+l+' only left, '+r+' only right';
- $('out').innerHTML=h;
-}
-function save(s){
- const t=view(s).map(m=>m.raw.replace(/\r\n/g,'\n').trim()).join('\n\n')+'\n',a=document.createElement('a');
- a.href=URL.createObjectURL(new Blob([t],{type:'text/plain'}));a.download=S[s].name.replace(/\.[^.]+$/,'')+'.sip.txt';a.click();
-}
-$('panels').innerHTML=['L','R'].map(s=>'<section class="pn"><h2>'+(s==='L'?'Left':'Right')+'</h2><label class="btn">Upload pcap, pcapng or text<input type="file" id="f'+s+'" accept=".pcap,.pcapng,.cap,.txt,.log,.sip" hidden></label> <span class="mu" id="n'+s+'">No file loaded</span>'+
- '<details><summary class="mu">Or paste SIP text</summary><textarea id="t'+s+'" rows="6" placeholder="Paste one or more SIP messages"></textarea><button data-p="'+s+'">Load text</button></details>'+
- '<div class="bar"><select id="c'+s+'"><option value="">All calls</option></select><button data-v="'+s+'">Save as plain text</button></div><div class="mu" id="i'+s+'"></div></section>').join('');
-for(const s of['L','R']){
- $('f'+s).onchange=e=>{const f=e.target.files[0];e.target.value='';f&&onFile(s,f)};
- $('c'+s).onchange=e=>{S[s].call=e.target.value;info(s);run()};
-}
-document.addEventListener('click',e=>{const d=e.target.dataset;if(d.p)setSide(d.p,textMsgs($('t'+d.p).value),'pasted text',0);if(d.v&&S[d.v])save(d.v)});
-['mask','norm','ign','od'].forEach(i=>$(i).oninput=run);
-</script></body></html>
+const S={},DIFF=new Set(['chg','L','R']);
+const view=s=>S[s].all.filter(m=>!S[s].call||m.callId===S[s].call);const tm=m=>m.ts?new Date(m.ts*1000).toISOString().slice(11,23):'';
+function info(s){const x=S[s],v=view(s),u=v.filter(m=>m.proto==='UDP').length,t=v.filter(m=>m.proto==='TCP').length;$('i'+s).textContent=v.length+' SIP messages'+(u+t?' (UDP '+u+', TCP '+t+')':'')+(x.tls?'. '+x.tls+' TLS packets found: encrypted SIP cannot be decoded.':'')+(x.all.length?'':'. No SIP found.')}
+function setSide(s,raws,name,tls){S[s]={name,all:raws.map(r=>parseMsg(r.raw,r)),call:'',tls};const cs=new Map();S[s].all.forEach(m=>cs.set(m.callId,(cs.get(m.callId)||0)+1));$('n'+s).textContent=name;$('c'+s).innerHTML='<option value="">All calls ('+cs.size+')</option>'+[...cs].map(([k,n])=>'<option value="'+E(k)+'">'+E(k.slice(0,48))+' ('+n+' msgs)</option>').join('');info(s);run()}
+async function onFile(s,f){try{const b=await f.arrayBuffer(),m=b.byteLength>3?new DataView(b).getUint32(0):0;if([0x0a0d0d0a,0xa1b2c3d4,0xd4c3b2a1,0xa1b23c4d,0x4d3cb2a1].includes(m)){const st=extract(readCap(b));setSide(s,st.msgs,f.name,st.tls)}else setSide(s,textMsgs(new TextDecoder().decode(b)),f.name,0)}catch(e){$('i'+s).textContent='Could not read file: '+e.message}}
+function renderRow(x,y,o){if(y.st==='ig'){if(o.only)return'';return'<tr class="ig"><th>'+E(y.name)+'</th><td>'+E(y.l??'—')+'</td><td>'+E(y.r??'—')+'</td></tr>'}if(y.st==='same'){if(o.only)return'';return'<tr class="same"><th>'+E(y.name)+'</th><td>'+E(y.l)+'</td><td>'+E(y.r)+'</td></tr>'}if(y.st==='chg'){return'<tr class="chg"><th>'+E(y.name)+'</th><td>'+y.diff.l+'</td><td>'+y.diff.r+'</td></tr>'}if(y.st==='L'){return'<tr class="L"><th>'+E(y.name)+'</th><td>'+E(y.l)+'</td><td><span class="empty">—</span></td></tr>'}return'<tr class="R"><th>'+E(y.name)+'</th><td><span class="empty">—</span></td><td>'+E(y.r)+'</td></tr>'}
+function run(){if(!S.L||!S.R){$('out').innerHTML='';return}const o=opts(),pr=alignMessages(view('L'),view('R'));let same=0,diff=0,l=0,r=0,h='';pr.forEach(([a,b],i)=>{if(!a||!b){const m=a||b,lbl=a?'left':'right';a?l++:r++;h+='<details class="m" open><summary><b>#'+(i+1)+'</b> '+E(m.label)+'<span class="only">only in '+lbl+'</span><span class="mu">'+tm(m)+'</span></summary><pre>'+E(m.raw)+'</pre></details>';return}const sc=compareMessage(a,b,o),n=sc.reduce((t,x)=>t+x.rows.filter(y=>DIFF.has(y.st)).length,0);n?diff++:same++;const rows=sc.map(sec=>{const rr=sec.rows.filter(y=>!o.only||DIFF.has(y.st));if(!rr.length)return'';return'<tr class="section"><th colspan="3">'+E(sec.name)+'</th></tr>'+rr.map(y=>renderRow(sec,y,o)).join('')}).join('');h+='<details class="m"'+(n?' open':'')+'><summary><b>#'+(i+1)+'</b> '+E(a.label)+' vs '+E(b.label)+(n?'<span class="bd">'+n+' difference'+(n>1?'s':'')+'</span>':'<span class="ok">identical</span>')+'<span class="mu">'+tm(a)+' | '+tm(b)+'</span></summary><table><tr><th>Header / line</th><th class="mu">'+E(S.L.name)+'</th><th class="mu">'+E(S.R.name)+'</th></tr>'+rows+'</table></details>'});$('sum').textContent=pr.length+' message slots: '+same+' identical, '+diff+' with differences, '+l+' only left, '+r+' only right; Left '+view('L').length+' SIP, Right '+view('R').length+' SIP.';$('out').innerHTML=h}
+function save(s){const t=view(s).map(m=>m.raw.replace(/\r\n/g,'\n').trim()).join('\n\n')+'\n',a=document.createElement('a');a.href=URL.createObjectURL(new Blob([t],{type:'text/plain'}));a.download=S[s].name.replace(/\.[^.]+$/,'')+'.sip.txt';a.click()}
+$('panels').innerHTML=['L','R'].map(s=>'<section class="pn"><h2>'+(s==='L'?'Left':'Right')+'</h2><label class="btn">Upload pcap, pcapng or text<input type="file" id="f'+s+'" accept=".pcap,.pcapng,.cap,.txt,.log,.sip" hidden></label> <span class="mu" id="n'+s+'">No file loaded</span><details><summary class="mu">Or paste SIP text</summary><textarea id="t'+s+'" rows="6" placeholder="Paste one or more SIP messages"></textarea><button data-p="'+s+'">Load text</button></details><div class="bar"><select id="c'+s+'"><option value="">All calls</option></select><button data-v="'+s+'">Save as plain text</button></div><div class="mu" id="i'+s+'"></div></section>').join('');
+for(const s of['L','R']){$('f'+s).onchange=e=>{const f=e.target.files[0];e.target.value='';f&&onFile(s,f)};$('c'+s).onchange=e=>{S[s].call=e.target.value;info(s);run()}}
+document.addEventListener('click',e=>{const d=e.target.dataset;if(d.p)setSide(d.p,textMsgs($('t'+d.p).value),'pasted text',0);if(d.v&&S[d.v])save(d.v)});['mask','norm','only','ign'].forEach(i=>$(i).oninput=run);
+</script></main></body></html>
