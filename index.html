@@ -1,0 +1,261 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SIP Compare</title>
+<style>
+:root{--bg:#fff;--fg:#1c2128;--mu:#6b7280;--bd:#d8dee4;--pn:#f6f8fa;--add:#d3f0dc;--del:#fbd9d9;--chg:#fff0b8;--ac:#2f6fed}
+@media(prefers-color-scheme:dark){:root{--bg:#0f1317;--fg:#e6e8eb;--mu:#8b95a1;--bd:#2b333c;--pn:#171c22;--add:#173a26;--del:#4a1f22;--chg:#4a3f14;--ac:#4f86f0}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:14px/1.45 system-ui,sans-serif}
+main{max-width:1280px;margin:0 auto;padding:16px}
+h1{font-size:20px;margin:0 0 4px}.mu{color:var(--mu)}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:14px 0}
+@media(max-width:800px){.grid{grid-template-columns:1fr}}
+.pn{background:var(--pn);border:1px solid var(--bd);border-radius:8px;padding:12px}
+.pn h2{font-size:14px;margin:0 0 8px}
+.btn,button,select,input[type=text]{font:inherit;border:1px solid var(--bd);border-radius:6px;background:var(--bg);color:var(--fg);padding:5px 10px;cursor:pointer}
+.btn{background:var(--ac);color:#fff;border-color:var(--ac);display:inline-block}
+:focus-visible{outline:2px solid var(--ac);outline-offset:2px}
+textarea{width:100%;font:12px ui-monospace,Menlo,Consolas,monospace;background:var(--bg);color:var(--fg);border:1px solid var(--bd);border-radius:6px;margin:6px 0}
+.bar{display:flex;flex-wrap:wrap;gap:14px;align-items:center;margin:8px 0}
+select{max-width:100%}
+details.m{border:1px solid var(--bd);border-radius:8px;margin:8px 0;overflow:hidden}
+details.m>summary{padding:8px 12px;cursor:pointer;background:var(--pn)}
+.bd{background:var(--chg);border-radius:10px;padding:0 8px;font-size:12px;margin:0 6px}
+table{width:100%;border-collapse:collapse;table-layout:fixed}
+th,td{border-top:1px solid var(--bd);padding:3px 8px;vertical-align:top;font:12px/1.4 ui-monospace,Menlo,Consolas,monospace;white-space:pre-wrap;word-break:break-all;text-align:left}
+th:first-child{width:16%;font-weight:600}
+tr.chg td{background:var(--chg)}tr.L td:nth-of-type(1){background:var(--del)}tr.R td:nth-of-type(2){background:var(--add)}
+tr.mk td,tr.ig td{color:var(--mu)}tr.ig td{font-style:italic}
+.od tr.same,.od tr.mk,.od tr.ig{display:none}
+pre{margin:0;padding:8px 12px;font:12px ui-monospace,Menlo,Consolas,monospace;white-space:pre-wrap}
+</style></head>
+<body><main>
+<h1>SIP Compare</h1>
+<div class="mu">Header-aware SIP diff (RFC 3261). Runs in your browser; nothing is uploaded.</div>
+<div class="grid" id="panels"></div>
+<div class="bar">
+<label><input type="checkbox" id="mask" checked> Mask dynamic values (branch, tag, Call-ID, CSeq number, SDP o= ids)</label>
+<label><input type="checkbox" id="norm" checked> Ignore whitespace and parameter order</label>
+<label><input type="checkbox" id="od"> Only differences</label>
+<label>Ignore headers: <input type="text" id="ign" value="Content-Length, Date" size="26"></label>
+</div>
+<div id="sum" class="mu">Load a capture or text on both sides to compare.</div><div id="out"></div>
+</main>
+<script>
+const $=i=>document.getElementById(i),E=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const C={i:'call-id',m:'contact',e:'content-encoding',l:'content-length',c:'content-type',f:'from',s:'subject',k:'supported',t:'to',v:'via',o:'event',u:'allow-events',r:'refer-to',b:'referred-by',x:'session-expires',a:'accept-contact',j:'reject-contact',d:'request-disposition',y:'identity',n:'identity-info'};
+const SIP=/^(SIP\/2\.0 \d{3}|[A-Z]+ \S+ SIP\/2\.0)/;
+const LIST=new Set(['via','route','record-route','path','history-info','supported','allow','require','proxy-require','unsupported','contact','accept','accept-encoding','accept-language','allow-events','p-asserted-identity']);
+const ORD=new Set(['via','route','record-route','path','history-info']);
+const rd16=(d,o)=>d[o]<<8|d[o+1],rd32=(d,o)=>((d[o]<<24)|(d[o+1]<<16)|(d[o+2]<<8)|d[o+3])>>>0;
+const ip4=(d,o)=>d.subarray(o,o+4).join('.'),ip6=(d,o)=>{const a=[];for(let i=0;i<16;i+=2)a.push(rd16(d,o+i).toString(16));return a.join(':')};
+
+/* ---------- SIP parsing ---------- */
+function splitList(v){const o=[];let d=0,q=0,s=0;for(let i=0;i<v.length;i++){const c=v[i];if(c=='"')q^=1;else if(!q){if(c=='<')d++;else if(c=='>')d--;else if(c==','&&!d){o.push(v.slice(s,i).trim());s=i+1}}}o.push(v.slice(s).trim());return o.filter(Boolean)}
+function parseMsg(raw,meta){
+ raw=raw.replace(/\r\n/g,'\n').replace(/^\n+/,'');
+ const i=raw.indexOf('\n\n'),head=i<0?raw:raw.slice(0,i),body=i<0?'':raw.slice(i+2),ls=head.split('\n'),start=ls.shift().trim(),hs=[];
+ for(const l of ls){
+  if(/^[ \t]/.test(l)&&hs.length){hs[hs.length-1].v+=' '+l.trim();continue}
+  const c=l.indexOf(':');if(c<1)continue;
+  const n=l.slice(0,c).trim();let k=n.toLowerCase();if(C[k])k=C[k];
+  hs.push({k,n:n.length===1?k:n,v:l.slice(c+1).trim()});
+ }
+ const rs=start.match(/^SIP\/2\.0 (\d{3})/),cs=((hs.find(h=>h.k==='cseq')||{v:''}).v.split(/\s+/)[1])||'';
+ return{...meta,start,hs,body,label:rs?rs[1]+(cs?' ('+cs+')':''):start.split(' ')[0],callId:(hs.find(h=>h.k==='call-id')||{v:'(none)'}).v};
+}
+function textMsgs(t){
+ t=t.replace(/\r\n/g,'\n');
+ const ix=[...t.matchAll(/^(?:SIP\/2\.0 \d{3}.*|[A-Z]+ \S+ SIP\/2\.0)[ \t]*$/gm)].map(m=>m.index);
+ return ix.map((s,i)=>({raw:t.slice(s,ix[i+1]??t.length).trim()+'\n',proto:'text'}));
+}
+
+/* ---------- pcap / pcapng ---------- */
+function readCap(buf){
+ const d=new Uint8Array(buf),v=new DataView(buf),m=v.getUint32(0),pk=[];
+ if(m===0x0a0d0d0a){
+  const le=v.getUint32(8,true)===0x1a2b3c4d,ifs=[];let o=0;
+  while(o+12<=d.length){
+   const t=v.getUint32(o,le),l=v.getUint32(o+4,le);if(l<12)break;
+   if(t===1){let res=1e-6;
+    for(let q=o+16;q+4<=o+l-4;){const c=v.getUint16(q,le),n=v.getUint16(q+2,le);if(c===0)break;if(c===9){const b=d[q+4];res=b&128?2**-(b&127):10**-b}q+=4+((n+3)&~3)}
+    ifs.push({link:v.getUint16(o+8,le),res});
+   }else if(t===6){
+    const f=ifs[v.getUint32(o+8,le)]||{link:1,res:1e-6},cl=v.getUint32(o+20,le);
+    pk.push({link:f.link,ts:(v.getUint32(o+12,le)*4294967296+v.getUint32(o+16,le))*f.res,data:d.subarray(o+28,o+28+cl)});
+   }
+   o+=l;
+  }
+ }else{
+  const le=m===0xd4c3b2a1||m===0x4d3cb2a1,ns=m===0xa1b23c4d||m===0x4d3cb2a1;
+  if(!(le||ns||m===0xa1b2c3d4))throw Error('Unrecognised capture format');
+  const link=v.getUint32(20,le);let o=24;
+  while(o+16<=d.length){const cl=v.getUint32(o+8,le);pk.push({link,ts:v.getUint32(o,le)+v.getUint32(o+4,le)/(ns?1e9:1e6),data:d.subarray(o+16,o+16+cl)});o+=16+cl}
+ }
+ return pk;
+}
+function pkt(p,st){
+ const d=p.data;let o=0,et,src,dst,pr,pl;
+ switch(p.link){
+  case 1:o=14;et=rd16(d,12);while(et===0x8100||et===0x88a8){et=rd16(d,o+2);o+=4}break;
+  case 113:o=16;et=rd16(d,14);break;
+  case 276:o=20;et=rd16(d,0);break;
+  case 0:case 108:o=4;
+  case 101:case 12:case 228:case 229:et=(d[o]>>4)===6?0x86dd:0x0800;break;
+  default:return;
+ }
+ if(et===0x0800){
+  const ih=(d[o]&15)*4,tot=rd16(d,o+2)||d.length-o,id=rd16(d,o+4),fl=rd16(d,o+6),off=(fl&0x1fff)*8,mf=fl&0x2000;
+  pr=d[o+9];src=ip4(d,o+12);dst=ip4(d,o+16);pl=d.subarray(o+ih,o+tot);
+  if(mf||off){ // IPv4 fragment reassembly
+   const k=src+dst+id+pr,e=st.fr.get(k)||{p:[],end:0};st.fr.set(k,e);
+   e.p.push({off,pl});if(!mf)e.end=off+pl.length;if(!e.end)return;
+   e.p.sort((a,b)=>a.off-b.off);let c=0;
+   for(const x of e.p){if(x.off>c)return;c=Math.max(c,x.off+x.pl.length)}
+   if(c<e.end)return;
+   const b=new Uint8Array(e.end);for(const x of e.p)b.set(x.pl,x.off);pl=b;st.fr.delete(k);
+  }
+ }else if(et===0x86dd){
+  let nx=d[o+6];src=ip6(d,o+8);dst=ip6(d,o+24);pl=d.subarray(o+40,o+40+rd16(d,o+4));
+  while(nx===0||nx===43||nx===60){const l=(pl[1]+1)*8;nx=pl[0];pl=pl.subarray(l)}
+  pr=nx;
+ }else return;
+ if(pr===17){
+  const t=new TextDecoder().decode(pl.subarray(8,rd16(pl,4)));
+  if(SIP.test(t.trimStart()))st.msgs.push({raw:t,ts:p.ts,proto:'UDP',src:src+':'+rd16(pl,0),dst:dst+':'+rd16(pl,2)});
+ }else if(pr===6){
+  const pay=pl.subarray((pl[12]>>4)*4);
+  if(!pay.length)return;
+  if((pay[0]===22||pay[0]===23)&&pay[1]===3)st.tls++;
+  const sp=rd16(pl,0),dp=rd16(pl,2),k=src+':'+sp+'>'+dst+':'+dp,f=st.tcp.get(k)||{src:src+':'+sp,dst:dst+':'+dp,s:[]};
+  st.tcp.set(k,f);f.s.push({seq:rd32(pl,4),pay,ts:p.ts});
+ }
+}
+function tcpMsgs(f,st){ // reorder, drop retransmits, frame by Content-Length
+ const b0=f.s[0].seq,s=f.s.map(x=>({...x,r:(x.seq-b0)|0})).sort((a,b)=>a.r-b.r),parts=[],map=[];let pos=0;
+ for(const x of s){const off=x.r-s[0].r;if(off+x.pay.length<=pos)continue;const c=off<pos?x.pay.subarray(pos-off):x.pay;map.push([pos,x.ts]);parts.push(c);pos+=c.length}
+ const buf=new Uint8Array(pos);let q=0;for(const c of parts){buf.set(c,q);q+=c.length}
+ const str=new TextDecoder('latin1').decode(buf);let p=0;
+ while(p<str.length){
+  while(str[p]==='\r'||str[p]==='\n')p++;
+  if(!SIP.test(str.slice(p,p+80)))break;
+  const he=str.indexOf('\r\n\r\n',p);if(he<0)break;
+  const cl=+((str.slice(p,he).match(/^(?:content-length|l)[ \t]*:[ \t]*(\d+)/im)||[])[1]||0),e=Math.min(he+4+cl,str.length);
+  const ts=(map.filter(m=>m[0]<=p).pop()||map[0])[1];
+  st.msgs.push({raw:new TextDecoder().decode(buf.subarray(p,e)),ts,proto:'TCP',src:f.src,dst:f.dst});p=e;
+ }
+}
+function extract(pk){
+ const st={fr:new Map,tcp:new Map,msgs:[],tls:0};
+ for(const p of pk){try{pkt(p,st)}catch{}}
+ for(const f of st.tcp.values())tcpMsgs(f,st);
+ st.msgs.sort((a,b)=>a.ts-b.ts);return st;
+}
+
+/* ---------- comparison ---------- */
+const opts=()=>({mask:$('mask').checked,norm:$('norm').checked,ign:new Set($('ign').value.toLowerCase().split(/[,\s]+/).filter(Boolean).map(x=>C[x]||x))});
+function nv(k,v,o){
+ if(o.mask){
+  if(k==='call-id')return'*';
+  if(k==='cseq')v=v.replace(/^\d+/,'#');
+  v=v.replace(/\b(branch|tag)=[^;>\s,]+/gi,'$1=*');
+  if(k==='sdp')v=v.replace(/^o=(\S+) \d+ \d+/,'o=$1 # #');
+ }
+ if(o.norm){
+  if(k==='sdp')v=v.replace(/\s+/g,' ');
+  else{const p=v.split(';').map(x=>x.trim().replace(/\s+/g,' '));v=[p.shift(),...p.sort()].join(';')}
+ }
+ return v;
+}
+const mk=(a,b,f)=>({l:a,r:b,st:a===undefined?'R':b===undefined?'L':a===b?'same':f(a)===f(b)?'mk':'chg'});
+function diffList(L,R,ord,f){
+ const rows=[];
+ if(ord){for(let i=0;i<Math.max(L.length,R.length);i++)rows.push(mk(L[i],R[i],f));return rows}
+ const used=new Set(),pend=[];
+ for(const a of L){const j=R.findIndex((b,n)=>!used.has(n)&&f(a)===f(b));if(j<0)pend.push(a);else{used.add(j);rows.push(mk(a,R[j],f))}}
+ const rest=R.filter((_,n)=>!used.has(n));
+ pend.forEach((a,i)=>rows.push(mk(a,rest[i],f)));
+ rest.slice(pend.length).forEach(b=>rows.push(mk(undefined,b,f)));
+ return rows;
+}
+function grp(m){const g=new Map();for(const h of m.hs){const e=g.get(h.k)||g.set(h.k,{n:h.n,v:[]}).get(h.k);e.v.push(...(LIST.has(h.k)?splitList(h.v):[h.v]))}return g}
+function secs(t){
+ const m=new Map(),c={};let cur=/^v=0/m.test(t)?'session':'body';
+ for(const l of t.split('\n').map(x=>x.trim()).filter(Boolean)){
+  if(cur!=='body'&&l.startsWith('m=')){const k=l.slice(2).split(' ')[0];c[k]=(c[k]||0)+1;cur='m='+k+(c[k]>1?'#'+c[k]:'')}
+  (m.get(cur)||m.set(cur,[]).get(cur)).push(l);
+ }
+ return m;
+}
+function cmp(a,b,o){
+ const out=[{name:'Start-Line',rows:[mk(a.start,b.start,s=>s.replace(/\s+/g,' ').trim())]}],A=grp(a),B=grp(b);
+ for(const k of new Set([...A.keys(),...B.keys()])){
+  const x=A.get(k),y=B.get(k);
+  let rows=diffList(x?x.v:[],y?y.v:[],ORD.has(k),v=>nv(k,v,o));
+  if(o.ign.has(k))rows=rows.map(r=>r.st==='chg'||r.st==='mk'?{...r,st:'ig'}:r);
+  out.push({name:(x||y).n,rows});
+ }
+ const sa=secs(a.body),sb=secs(b.body);
+ for(const k of new Set([...sa.keys(),...sb.keys()]))out.push({name:k==='body'?'Body':'SDP '+k,rows:diffList(sa.get(k)||[],sb.get(k)||[],k==='body',v=>nv('sdp',v,o))});
+ return out;
+}
+function align(A,B){ // LCS on labels: INVITE, 183 (INVITE), 180 (INVITE), PRACK, ...
+ const n=A.length,m=B.length,d=Array.from({length:n+1},()=>new Int32Array(m+1));
+ for(let i=n-1;i>=0;i--)for(let j=m-1;j>=0;j--)d[i][j]=A[i].label===B[j].label?d[i+1][j+1]+1:Math.max(d[i+1][j],d[i][j+1]);
+ const o=[];let i=0,j=0;
+ while(i<n&&j<m){if(A[i].label===B[j].label)o.push([A[i++],B[j++]]);else if(d[i+1][j]>=d[i][j+1])o.push([A[i++],null]);else o.push([null,B[j++]])}
+ while(i<n)o.push([A[i++],null]);while(j<m)o.push([null,B[j++]]);
+ return o;
+}
+
+/* ---------- UI ---------- */
+const S={},D=new Set(['chg','L','R']);
+const view=s=>S[s].all.filter(m=>!S[s].call||m.callId===S[s].call);
+const tm=m=>m.ts?new Date(m.ts*1000).toISOString().slice(11,23):'';
+const cell=v=>v===undefined?'<span class="mu">-</span>':E(v);
+function info(s){
+ const x=S[s],v=view(s),u=v.filter(m=>m.proto==='UDP').length,t=v.filter(m=>m.proto==='TCP').length;
+ $('i'+s).textContent=v.length+' SIP messages'+(u+t?' (UDP '+u+', TCP '+t+')':'')+(x.tls?'. '+x.tls+' TLS packets found: encrypted SIP cannot be decoded.':'')+(x.all.length?'':'. No SIP found.');
+}
+function setSide(s,raws,name,tls){
+ S[s]={name,all:raws.map(r=>parseMsg(r.raw,r)),call:'',tls};
+ const cs=new Map();S[s].all.forEach(m=>cs.set(m.callId,(cs.get(m.callId)||0)+1));
+ $('n'+s).textContent=name;
+ $('c'+s).innerHTML='<option value="">All calls ('+cs.size+')</option>'+[...cs].map(([k,n])=>'<option value="'+E(k)+'">'+E(k.slice(0,48))+' ('+n+' msgs)</option>').join('');
+ info(s);run();
+}
+async function onFile(s,f){
+ try{
+  const b=await f.arrayBuffer(),m=b.byteLength>3?new DataView(b).getUint32(0):0;
+  if([0x0a0d0d0a,0xa1b2c3d4,0xd4c3b2a1,0xa1b23c4d,0x4d3cb2a1].includes(m)){const st=extract(readCap(b));setSide(s,st.msgs,f.name,st.tls)}
+  else setSide(s,textMsgs(new TextDecoder().decode(b)),f.name,0);
+ }catch(e){$('i'+s).textContent='Could not read file: '+e.message}
+}
+function run(){
+ $('out').className=$('od').checked?'od':'';
+ if(!S.L||!S.R){$('out').innerHTML='';return}
+ const o=opts(),pr=align(view('L'),view('R'));let same=0,diff=0,l=0,r=0,h='';
+ pr.forEach(([a,b],i)=>{
+  if(!a||!b){const m=a||b,side=a?'left':'right';a?l++:r++;
+   h+='<details class="m"><summary><b>#'+(i+1)+'</b> '+E(m.label)+'<span class="bd">only in '+side+'</span><span class="mu">'+tm(m)+'</span></summary><pre>'+E(m.raw)+'</pre></details>';return}
+  const sc=cmp(a,b,o),n=sc.reduce((t,x)=>t+x.rows.filter(y=>D.has(y.st)).length,0);n?diff++:same++;
+  h+='<details class="m"'+(n?' open':'')+'><summary><b>#'+(i+1)+'</b> '+E(a.label)+' vs '+E(b.label)+(n?'<span class="bd">'+n+' difference'+(n>1?'s':'')+'</span>':'<span class="mu"> identical</span>')+'<span class="mu">'+tm(a)+' | '+tm(b)+'</span></summary><table><tr><th></th><th class="mu">'+E(S.L.name)+'</th><th class="mu">'+E(S.R.name)+'</th></tr>'+
+   sc.map(x=>x.rows.map((y,j)=>'<tr class="'+y.st+'"><th>'+(j?'':E(x.name))+'</th><td>'+cell(y.l)+'</td><td>'+cell(y.r)+'</td></tr>').join('')).join('')+'</table></details>';
+ });
+ $('sum').textContent=pr.length+' message slots: '+same+' identical, '+diff+' with differences, '+l+' only left, '+r+' only right';
+ $('out').innerHTML=h;
+}
+function save(s){
+ const t=view(s).map(m=>m.raw.replace(/\r\n/g,'\n').trim()).join('\n\n')+'\n',a=document.createElement('a');
+ a.href=URL.createObjectURL(new Blob([t],{type:'text/plain'}));a.download=S[s].name.replace(/\.[^.]+$/,'')+'.sip.txt';a.click();
+}
+$('panels').innerHTML=['L','R'].map(s=>'<section class="pn"><h2>'+(s==='L'?'Left':'Right')+'</h2><label class="btn">Upload pcap, pcapng or text<input type="file" id="f'+s+'" accept=".pcap,.pcapng,.cap,.txt,.log,.sip" hidden></label> <span class="mu" id="n'+s+'">No file loaded</span>'+
+ '<details><summary class="mu">Or paste SIP text</summary><textarea id="t'+s+'" rows="6" placeholder="Paste one or more SIP messages"></textarea><button data-p="'+s+'">Load text</button></details>'+
+ '<div class="bar"><select id="c'+s+'"><option value="">All calls</option></select><button data-v="'+s+'">Save as plain text</button></div><div class="mu" id="i'+s+'"></div></section>').join('');
+for(const s of['L','R']){
+ $('f'+s).onchange=e=>{const f=e.target.files[0];e.target.value='';f&&onFile(s,f)};
+ $('c'+s).onchange=e=>{S[s].call=e.target.value;info(s);run()};
+}
+document.addEventListener('click',e=>{const d=e.target.dataset;if(d.p)setSide(d.p,textMsgs($('t'+d.p).value),'pasted text',0);if(d.v&&S[d.v])save(d.v)});
+['mask','norm','ign','od'].forEach(i=>$(i).oninput=run);
+</script></body></html>
