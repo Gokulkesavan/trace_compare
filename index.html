@@ -84,15 +84,11 @@ a{color:var(--accent);text-decoration:none}
 a:hover{text-decoration:underline}
 ::selection{background:var(--accent-soft);color:var(--accent)}
 :focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
-
-/* Custom scrollbars */
 *{scrollbar-width:thin;scrollbar-color:var(--border-2) transparent}
 *::-webkit-scrollbar{width:10px;height:10px}
 *::-webkit-scrollbar-track{background:transparent}
 *::-webkit-scrollbar-thumb{background:var(--border-2);border-radius:10px;border:2px solid transparent;background-clip:padding-box}
 *::-webkit-scrollbar-thumb:hover{background:var(--text-3);border:2px solid transparent;background-clip:padding-box}
-
-/* ---------- Header ---------- */
 .app-header{
   position:sticky;top:0;z-index:50;
   background:color-mix(in oklab,var(--bg) 85%,transparent);
@@ -115,279 +111,88 @@ a:hover{text-decoration:underline}
 }
 .brand-mark svg{width:18px;height:18px}
 .brand-text{min-width:0}
-.brand-text h1{
-  font-size:15px;font-weight:600;letter-spacing:-.01em;line-height:1.2;
-}
-.brand-text p{
-  font-size:12px;color:var(--text-3);line-height:1.3;
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
-}
+.brand-text h1{font-size:15px;font-weight:600;letter-spacing:-.01em;line-height:1.2}
+.brand-text p{font-size:12px;color:var(--text-3);line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .header-badges{margin-left:auto;display:flex;gap:6px}
-.badge{
-  display:inline-flex;align-items:center;gap:4px;
-  padding:3px 8px;border-radius:999px;
-  font-size:11px;font-weight:600;letter-spacing:.02em;
-  background:var(--surface-2);color:var(--text-2);
-  border:1px solid var(--border);
-}
+.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:999px;font-size:11px;font-weight:600;letter-spacing:.02em;background:var(--surface-2);color:var(--text-2);border:1px solid var(--border)}
 .badge-ok{background:var(--add-bg);color:var(--add-fg);border-color:var(--add-border)}
 .badge-dot{width:5px;height:5px;border-radius:50%;background:currentColor}
-
-/* ---------- Main layout ---------- */
 main{max-width:1560px;margin:0 auto;padding:24px 28px 60px}
 .mu{color:var(--text-3)}
-
 .grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:0 0 16px}
 @media(max-width:900px){.grid{grid-template-columns:1fr}}
-
-/* ---------- Panels ---------- */
-.pn{
-  background:var(--surface);
-  border:1px solid var(--border);
-  border-radius:var(--radius-lg);
-  padding:20px;
-  box-shadow:var(--shadow-sm);
-  transition:border-color .15s, box-shadow .15s;
-}
+.pn{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:20px;box-shadow:var(--shadow-sm);transition:border-color .15s, box-shadow .15s}
 .pn:hover{border-color:var(--border-2)}
-.pn h2{
-  font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;
-  color:var(--text-3);margin-bottom:12px;
-}
+.pn h2{font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--text-3);margin-bottom:12px}
 .pn .mu{font-size:12.5px}
-.pn .bar{
-  display:flex;gap:8px;align-items:center;flex-wrap:wrap;
-  margin-top:14px;padding-top:14px;border-top:1px solid var(--border);
-}
+.pn .bar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:14px;padding-top:14px;border-top:1px solid var(--border)}
 .pn .bar select{flex:1;min-width:0}
 .pn details{margin-top:12px;border-radius:var(--radius);border:1px solid transparent}
-.pn details > summary{
-  list-style:none;cursor:pointer;padding:8px 12px;
-  font-size:12.5px;color:var(--text-2);font-weight:500;
-  border-radius:var(--radius);
-  transition:background .12s;
-  display:flex;align-items:center;gap:8px;
-}
+.pn details > summary{list-style:none;cursor:pointer;padding:8px 12px;font-size:12.5px;color:var(--text-2);font-weight:500;border-radius:var(--radius);transition:background .12s;display:flex;align-items:center;gap:8px}
 .pn details > summary::-webkit-details-marker{display:none}
-.pn details > summary::before{
-  content:"";width:6px;height:6px;
-  border-right:1.5px solid currentColor;
-  border-bottom:1.5px solid currentColor;
-  transform:rotate(-45deg);margin-right:2px;
-  transition:transform .2s;
-}
+.pn details > summary::before{content:"";width:6px;height:6px;border-right:1.5px solid currentColor;border-bottom:1.5px solid currentColor;transform:rotate(-45deg);margin-right:2px;transition:transform .2s}
 .pn details[open] > summary::before{transform:rotate(45deg)}
 .pn details > summary:hover{background:var(--surface-2);color:var(--text)}
-.pn details textarea{
-  margin-top:6px;font:12px/1.55 var(--font-mono);
-  background:var(--surface);color:var(--text);
-  border:1px solid var(--border);border-radius:var(--radius);
-  padding:10px 12px;width:100%;resize:vertical;min-height:120px;
-  transition:border-color .15s, box-shadow .15s;
-}
-.pn details textarea:focus{
-  outline:none;border-color:var(--accent);
-  box-shadow:0 0 0 3px color-mix(in oklab,var(--accent) 15%,transparent);
-}
+.pn details textarea{margin-top:6px;font:12px/1.55 var(--font-mono);background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:var(--radius);padding:10px 12px;width:100%;resize:vertical;min-height:120px;transition:border-color .15s, box-shadow .15s}
+.pn details textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in oklab,var(--accent) 15%,transparent)}
 .pn details button{margin-top:8px}
-
-/* ---------- Buttons ---------- */
-button,.btn{
-  font:inherit;font-size:13px;font-weight:500;
-  border:1px solid var(--border);
-  background:var(--surface);color:var(--text);
-  padding:7px 12px;border-radius:var(--radius);
-  cursor:pointer;
-  display:inline-flex;align-items:center;gap:6px;
-  transition:all .12s ease;
-  white-space:nowrap;
-}
+button,.btn{font:inherit;font-size:13px;font-weight:500;border:1px solid var(--border);background:var(--surface);color:var(--text);padding:7px 12px;border-radius:var(--radius);cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:all .12s ease;white-space:nowrap}
 button:hover,.btn:hover{background:var(--surface-2);border-color:var(--border-2)}
 button:active,.btn:active{transform:translateY(1px)}
-.btn{
-  background:var(--accent);color:#fff;border-color:var(--accent);
-  font-weight:600;
-  box-shadow:0 1px 2px color-mix(in oklab,var(--accent) 25%,transparent);
-}
+.btn{background:var(--accent);color:#fff;border-color:var(--accent);font-weight:600;box-shadow:0 1px 2px color-mix(in oklab,var(--accent) 25%,transparent)}
 .btn:hover{background:var(--accent-2);border-color:var(--accent-2)}
 .btn input[type=file]{display:none}
-
-select,input[type=text]{
-  font:inherit;font-size:13px;
-  border:1px solid var(--border);
-  background:var(--surface);color:var(--text);
-  padding:7px 10px;border-radius:var(--radius);
-  cursor:pointer;
-  transition:border-color .15s, box-shadow .15s;
-}
+select,input[type=text]{font:inherit;font-size:13px;border:1px solid var(--border);background:var(--surface);color:var(--text);padding:7px 10px;border-radius:var(--radius);cursor:pointer;transition:border-color .15s, box-shadow .15s}
 select:hover{border-color:var(--border-2)}
-select:focus,input[type=text]:focus{
-  outline:none;border-color:var(--accent);
-  box-shadow:0 0 0 3px color-mix(in oklab,var(--accent) 15%,transparent);
-}
-
-/* ---------- Toolbar ---------- */
-.bar{
-  display:flex;flex-wrap:wrap;gap:6px;align-items:center;
-  background:var(--surface);
-  border:1px solid var(--border);
-  border-radius:var(--radius-lg);
-  padding:8px 10px;
-  margin-bottom:16px;
-  box-shadow:var(--shadow-xs);
-}
-.switch{
-  display:inline-flex;align-items:center;gap:9px;
-  padding:7px 12px;border-radius:var(--radius);
-  cursor:pointer;user-select:none;
-  transition:background .12s;
-  font-size:13px;font-weight:500;color:var(--text-2);
-}
+select:focus,input[type=text]:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in oklab,var(--accent) 15%,transparent)}
+.bar{display:flex;flex-wrap:wrap;gap:6px;align-items:center;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:8px 10px;margin-bottom:16px;box-shadow:var(--shadow-xs)}
+.switch{display:inline-flex;align-items:center;gap:9px;padding:7px 12px;border-radius:var(--radius);cursor:pointer;user-select:none;transition:background .12s;font-size:13px;font-weight:500;color:var(--text-2)}
 .switch:hover{background:var(--surface-2);color:var(--text)}
-.switch input[type=checkbox]{
-  appearance:none;-webkit-appearance:none;
-  width:30px;height:18px;flex-shrink:0;
-  background:var(--border-2);border-radius:999px;
-  position:relative;cursor:pointer;margin:0;
-  transition:background .2s;
-}
-.switch input[type=checkbox]::after{
-  content:"";position:absolute;top:2px;left:2px;
-  width:14px;height:14px;background:#fff;border-radius:50%;
-  transition:transform .22s cubic-bezier(.4,0,.2,1);
-  box-shadow:0 1px 2px rgba(0,0,0,.25);
-}
+.switch input[type=checkbox]{appearance:none;-webkit-appearance:none;width:30px;height:18px;flex-shrink:0;background:var(--border-2);border-radius:999px;position:relative;cursor:pointer;margin:0;transition:background .2s}
+.switch input[type=checkbox]::after{content:"";position:absolute;top:2px;left:2px;width:14px;height:14px;background:#fff;border-radius:50%;transition:transform .22s cubic-bezier(.4,0,.2,1);box-shadow:0 1px 2px rgba(0,0,0,.25)}
 .switch input[type=checkbox]:checked{background:var(--accent)}
 .switch input[type=checkbox]:checked::after{transform:translateX(12px)}
 .switch input[type=checkbox]:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
-
-.toolbar-divider{
-  width:1px;height:24px;background:var(--border);margin:0 4px;
-}
-.toolbar-field{
-  display:inline-flex;align-items:center;gap:8px;
-  padding:4px 6px 4px 12px;
-  background:var(--surface-2);border:1px solid var(--border);
-  border-radius:var(--radius);
-  font-size:12.5px;color:var(--text-2);font-weight:500;
-  transition:border-color .15s, box-shadow .15s;
-}
-.toolbar-field:focus-within{
-  border-color:var(--accent);
-  box-shadow:0 0 0 3px color-mix(in oklab,var(--accent) 15%,transparent);
-}
-.toolbar-field input[type=text]{
-  border:none;background:transparent;padding:4px 6px;
-  font:inherit;font-size:13px;color:var(--text);
-  width:140px;
-}
+.toolbar-divider{width:1px;height:24px;background:var(--border);margin:0 4px}
+.toolbar-field{display:inline-flex;align-items:center;gap:8px;padding:4px 6px 4px 12px;background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius);font-size:12.5px;color:var(--text-2);font-weight:500;transition:border-color .15s, box-shadow .15s}
+.toolbar-field:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in oklab,var(--accent) 15%,transparent)}
+.toolbar-field input[type=text]{border:none;background:transparent;padding:4px 6px;font:inherit;font-size:13px;color:var(--text);width:140px}
 .toolbar-field input[type=text]:focus{outline:none;box-shadow:none}
-
-/* ---------- Dictionary ---------- */
-details.dict{
-  background:var(--surface);
-  border:1px solid var(--border);
-  border-radius:var(--radius-lg);
-  margin-bottom:16px;
-  overflow:hidden;
-  box-shadow:var(--shadow-sm);
-}
-details.dict > summary{
-  list-style:none;cursor:pointer;
-  padding:14px 18px;
-  display:flex;align-items:center;gap:12px;
-  transition:background .12s;
-}
+details.dict{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);margin-bottom:16px;overflow:hidden;box-shadow:var(--shadow-sm)}
+details.dict > summary{list-style:none;cursor:pointer;padding:14px 18px;display:flex;align-items:center;gap:12px;transition:background .12s}
 details.dict > summary::-webkit-details-marker{display:none}
 details.dict > summary:hover{background:var(--surface-2)}
-.dict-chevron{
-  width:8px;height:8px;flex-shrink:0;
-  border-right:1.5px solid var(--text-3);
-  border-bottom:1.5px solid var(--text-3);
-  transform:rotate(-45deg);
-  transition:transform .22s;
-  margin-left:4px;
-}
+.dict-chevron{width:8px;height:8px;flex-shrink:0;border-right:1.5px solid var(--text-3);border-bottom:1.5px solid var(--text-3);transform:rotate(-45deg);transition:transform .22s;margin-left:4px}
 details.dict[open] .dict-chevron{transform:rotate(45deg)}
 .dict-title{font-size:13.5px;font-weight:600;color:var(--text)}
 .dict-sub{font-size:12px;color:var(--text-3);margin-top:1px}
 .dict-body{padding:0 18px 18px;border-top:1px solid var(--border)}
-.dict-controls{
-  display:flex;gap:10px;flex-wrap:wrap;
-  padding:14px 0 4px;
-}
-.dict-controls select,.dict-controls input[type=text]{
-  min-width:220px;flex:1;
-}
+.dict-controls{display:flex;gap:10px;flex-wrap:wrap;padding:14px 0 4px}
+.dict-controls select,.dict-controls input[type=text]{min-width:220px;flex:1}
 .dict-head{display:contents}
-
 .dict-grid{display:grid;grid-template-columns:1.15fr 2fr;gap:12px;margin-top:12px}
-.dict-box{
-  background:var(--surface-2);
-  border:1px solid var(--border);
-  border-radius:var(--radius);
-  padding:14px;
-}
-.dict-box h3{
-  margin:0 0 8px;
-  font-size:11.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;
-  color:var(--text-3);
-}
+.dict-box{background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius);padding:14px}
+.dict-box h3{margin:0 0 8px;font-size:11.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--text-3)}
 .dict-meta{font-size:11.5px;color:var(--text-3);margin-bottom:8px}
-.dict-grammar{
-  font:12px/1.6 var(--font-mono);
-  color:var(--text-2);
-  white-space:pre-wrap;word-break:break-word;
-  background:var(--surface);
-  border:1px solid var(--border);
-  border-radius:var(--radius-sm);
-  padding:10px 12px;
-}
+.dict-grammar{font:12px/1.6 var(--font-mono);color:var(--text-2);white-space:pre-wrap;word-break:break-word;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px}
 .dict-note{margin-top:10px;font-size:12px;color:var(--text-3);line-height:1.55}
 .dict-table{width:100%;border-collapse:collapse;font-size:12.5px}
-.dict-table th{
-  background:transparent;color:var(--text-3);
-  font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;
-  text-align:left;padding:8px 10px;border-bottom:1px solid var(--border);
-}
-.dict-table td{
-  padding:9px 10px;border-top:1px solid var(--border);vertical-align:top;
-  color:var(--text-2);line-height:1.5;
-}
+.dict-table th{background:transparent;color:var(--text-3);font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;text-align:left;padding:8px 10px;border-bottom:1px solid var(--border)}
+.dict-table td{padding:9px 10px;border-top:1px solid var(--border);vertical-align:top;color:var(--text-2);line-height:1.5}
 .dict-table th:nth-child(1){width:22%}
 .dict-table th:nth-child(2){width:16%}
 .dict-table th:nth-child(3){width:38%}
 .dict-table th:nth-child(4){width:24%}
-.dict-code{
-  font:11.5px/1.5 var(--font-mono);
-  background:var(--surface);color:var(--text);
-  padding:2px 6px;border-radius:4px;
-  border:1px solid var(--border);
-  display:inline-block;
-}
-.dict-std,.dict-gen,.dict-focus{
-  display:inline-flex;align-items:center;
-  padding:2px 8px;border-radius:999px;
-  font-size:10.5px;font-weight:600;letter-spacing:.03em;
-}
+.dict-code{font:11.5px/1.5 var(--font-mono);background:var(--surface);color:var(--text);padding:2px 6px;border-radius:4px;border:1px solid var(--border);display:inline-block}
+.dict-std,.dict-gen,.dict-focus{display:inline-flex;align-items:center;padding:2px 8px;border-radius:999px;font-size:10.5px;font-weight:600;letter-spacing:.03em}
 .dict-std{background:var(--add-bg);color:var(--add-fg);border:1px solid var(--add-border)}
 .dict-gen{background:var(--ign-bg);color:var(--ign-fg);border:1px solid var(--border)}
 .dict-focus{background:var(--chg-bg);color:var(--chg-fg);border:1px solid var(--chg-border)}
 .dict-empty{color:var(--text-3);padding:16px;text-align:center;font-size:12.5px}
 @media(max-width:900px){.dict-grid{grid-template-columns:1fr}}
-
-/* ---------- Results head ---------- */
-.results-head{
-  display:flex;flex-wrap:wrap;gap:14px;align-items:center;justify-content:space-between;
-  padding:4px 4px 12px;
-}
+.results-head{display:flex;flex-wrap:wrap;gap:14px;align-items:center;justify-content:space-between;padding:4px 4px 12px}
 .legend{display:flex;flex-wrap:wrap;gap:6px;font-size:12px}
-.pill{
-  display:inline-flex;align-items:center;gap:6px;
-  padding:3px 10px;border-radius:999px;
-  font-size:11.5px;font-weight:500;
-  border:1px solid transparent;
-}
+.pill{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:999px;font-size:11.5px;font-weight:500;border:1px solid transparent}
 .pill::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor;opacity:.85}
 .pill-add{background:var(--add-bg);color:var(--add-fg);border-color:var(--add-border)}
 .pill-del{background:var(--del-bg);color:var(--del-fg);border-color:var(--del-border)}
@@ -395,182 +200,53 @@ details.dict[open] .dict-chevron{transform:rotate(45deg)}
 .pill-ign{background:var(--ign-bg);color:var(--ign-fg);border-color:var(--border)}
 #sum{font-size:12.5px;color:var(--text-3)}
 #sum b{color:var(--text);font-weight:600}
-
-/* ---------- Message accordion ---------- */
-details.m{
-  background:var(--surface);
-  border:1px solid var(--border);
-  border-radius:var(--radius-lg);
-  margin-bottom:10px;
-  overflow:hidden;
-  box-shadow:var(--shadow-xs);
-  transition:box-shadow .15s, border-color .15s;
-}
+details.m{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);margin-bottom:10px;overflow:hidden;box-shadow:var(--shadow-xs);transition:box-shadow .15s, border-color .15s}
 details.m:hover{border-color:var(--border-2);box-shadow:var(--shadow-sm)}
 details.m[open]{box-shadow:var(--shadow-sm)}
-details.m > summary{
-  list-style:none;cursor:pointer;
-  padding:14px 18px;
-  display:flex;align-items:center;flex-wrap:wrap;gap:10px;
-  font-size:13px;
-  transition:background .12s;
-  position:relative;
-}
+details.m > summary{list-style:none;cursor:pointer;padding:14px 18px;display:flex;align-items:center;flex-wrap:wrap;gap:10px;font-size:13px;transition:background .12s;position:relative}
 details.m > summary::-webkit-details-marker{display:none}
-details.m > summary::before{
-  content:"";width:7px;height:7px;flex-shrink:0;
-  border-right:1.5px solid var(--text-3);
-  border-bottom:1.5px solid var(--text-3);
-  transform:rotate(-45deg);
-  transition:transform .22s;
-  margin-right:2px;
-  margin-top:-3px;
-}
+details.m > summary::before{content:"";width:7px;height:7px;flex-shrink:0;border-right:1.5px solid var(--text-3);border-bottom:1.5px solid var(--text-3);transform:rotate(-45deg);transition:transform .22s;margin-right:2px;margin-top:-3px}
 details.m[open] > summary::before{transform:rotate(45deg);margin-top:1px}
 details.m > summary:hover{background:var(--surface-2)}
-details.m > summary > b{
-  display:inline-flex;align-items:center;justify-content:center;
-  min-width:32px;height:22px;padding:0 8px;
-  background:var(--surface-2);
-  border:1px solid var(--border);
-  border-radius:6px;
-  font:600 11.5px/1 var(--font-mono);
-  color:var(--text-2);
-  letter-spacing:.02em;
-}
-details.m > summary .mu{
-  margin-left:auto;
-  font:11.5px/1 var(--font-mono);
-  color:var(--text-3);
-  letter-spacing:.01em;
-}
-details.m > pre{
-  margin:0;padding:16px 18px;
-  font:12.5px/1.65 var(--font-mono);
-  background:var(--surface-2);
-  border-top:1px solid var(--border);
-  color:var(--text-2);
-  overflow-x:auto;white-space:pre-wrap;word-break:break-word;
-}
-
-/* ---------- Badges (bd / ok / only) ---------- */
-.bd,.ok,.only{
-  display:inline-flex;align-items:center;gap:5px;
-  padding:2px 9px;border-radius:999px;
-  font:600 11px/1.5 var(--font-sans);
-  letter-spacing:.02em;
-}
+details.m > summary > b{display:inline-flex;align-items:center;justify-content:center;min-width:32px;height:22px;padding:0 8px;background:var(--surface-2);border:1px solid var(--border);border-radius:6px;font:600 11.5px/1 var(--font-mono);color:var(--text-2);letter-spacing:.02em}
+details.m > summary .mu{margin-left:auto;font:11.5px/1 var(--font-mono);color:var(--text-3);letter-spacing:.01em}
+details.m > pre{margin:0;padding:16px 18px;font:12.5px/1.65 var(--font-mono);background:var(--surface-2);border-top:1px solid var(--border);color:var(--text-2);overflow-x:auto;white-space:pre-wrap;word-break:break-word}
+.bd,.ok,.only{display:inline-flex;align-items:center;gap:5px;padding:2px 9px;border-radius:999px;font:600 11px/1.5 var(--font-sans);letter-spacing:.02em}
 .bd{background:var(--chg-bg);color:var(--chg-fg);border:1px solid var(--chg-border)}
 .ok{background:var(--add-bg);color:var(--add-fg);border:1px solid var(--add-border)}
 .only{background:var(--del-bg);color:var(--del-fg);border:1px solid var(--del-border)}
-
-/* ---------- Inline diff ---------- */
-.inline-diff{
-  border-top:1px solid var(--border);
-  background:var(--surface);
-}
-.inline-diff-row{
-  display:grid;
-  grid-template-columns:200px minmax(0,1fr) minmax(0,1fr);
-  border-bottom:1px solid var(--border);
-  font:12.5px/1.6 var(--font-mono);
-  transition:background .1s;
-}
+.inline-diff{border-top:1px solid var(--border);background:var(--surface)}
+.inline-diff-row{display:grid;grid-template-columns:200px minmax(0,1fr) minmax(0,1fr);border-bottom:1px solid var(--border);font:12.5px/1.6 var(--font-mono);transition:background .1s}
 .inline-diff-row:last-child{border-bottom:none}
 .inline-diff-row:hover{background:var(--surface-2)}
-
-.inline-diff-name{
-  padding:11px 14px;
-  font:600 11px/1.45 var(--font-sans);
-  color:var(--text-2);
-  background:var(--surface);
-  border-right:1px solid var(--border);
-  letter-spacing:.005em;
-  position:relative;
-  display:flex;flex-direction:column;gap:4px;
-}
+.inline-diff-name{padding:11px 14px;font:600 11px/1.45 var(--font-sans);color:var(--text-2);background:var(--surface);border-right:1px solid var(--border);letter-spacing:.005em;position:relative;display:flex;flex-direction:column;gap:4px}
 .inline-diff-row:hover .inline-diff-name{background:var(--surface-2)}
-
-.inline-side{
-  padding:11px 14px;
-  min-width:0;
-  white-space:pre-wrap;
-  word-break:break-word;
-  color:var(--text);
-  position:relative;
-}
+.inline-side{padding:11px 14px;min-width:0;white-space:pre-wrap;word-break:break-word;color:var(--text);position:relative}
 .inline-side.left{border-right:1px solid var(--border)}
-.inline-side.right{}
-
-.inline-side .focus-value{
-  background:var(--chg-bg);
-  color:var(--chg-fg);
-  border-radius:3px;
-  padding:1px 3px;
-  font-weight:600;
-  box-shadow:inset 0 0 0 1px var(--chg-border);
-}
+.inline-side .focus-value{background:var(--chg-bg);color:var(--chg-fg);border-radius:3px;padding:1px 3px;font-weight:600;box-shadow:inset 0 0 0 1px var(--chg-border)}
 .inline-side .generated-value{color:var(--text-3)}
-.inline-side .only-value{
-  background:var(--add-bg);
-  color:var(--add-fg);
-  border-radius:3px;
-  padding:1px 3px;
-  font-weight:600;
-}
+.inline-side .only-value{background:var(--add-bg);color:var(--add-fg);border-radius:3px;padding:1px 3px;font-weight:600}
 .inline-side .empty{color:var(--text-3);font-style:italic;font-family:var(--font-sans);font-size:12px}
-
-.inline-rfc{
-  display:block;margin-top:4px;
-  color:var(--text-3);
-  font:10.5px/1.4 var(--font-sans);
-  font-weight:400;
-  letter-spacing:.005em;
-}
-.inline-badge{
-  display:inline-flex;align-items:center;gap:4px;
-  padding:2px 7px;border-radius:999px;
-  font:600 10px/1.5 var(--font-sans);
-  letter-spacing:.02em;
-  align-self:flex-start;
-}
-.inline-badge::before{
-  content:"";width:4px;height:4px;border-radius:50%;background:currentColor;
-}
+.inline-rfc{display:block;margin-top:4px;color:var(--text-3);font:10.5px/1.4 var(--font-sans);font-weight:400;letter-spacing:.005em}
+.inline-badge{display:inline-flex;align-items:center;gap:4px;padding:2px 7px;border-radius:999px;font:600 10px/1.5 var(--font-sans);letter-spacing:.02em;align-self:flex-start}
+.inline-badge::before{content:"";width:4px;height:4px;border-radius:50%;background:currentColor}
 .inline-badge.diff{background:var(--chg-bg);color:var(--chg-fg);border:1px solid var(--chg-border)}
 .inline-badge.same{background:var(--add-bg);color:var(--add-fg);border:1px solid var(--add-border)}
 .inline-badge.only{background:var(--del-bg);color:var(--del-fg);border:1px solid var(--del-border)}
 .inline-badge.info{background:var(--ign-bg);color:var(--ign-fg);border:1px solid var(--border)}
-
 @media(max-width:900px){
   .inline-diff-row{grid-template-columns:1fr}
-  .inline-diff-name{
-    grid-row:auto;border-right:none;border-bottom:1px solid var(--border);
-    flex-direction:row;align-items:center;gap:8px;flex-wrap:wrap;
-  }
+  .inline-diff-name{grid-row:auto;border-right:none;border-bottom:1px solid var(--border);flex-direction:row;align-items:center;gap:8px;flex-wrap:wrap}
   .inline-rfc{display:inline;margin-top:0}
   .inline-side.left{border-right:none;border-bottom:1px dashed var(--border)}
 }
-
-/* ---------- Empty state ---------- */
-.empty-state{
-  text-align:center;padding:60px 20px;
-  color:var(--text-3);
-}
-.empty-state-icon{
-  width:44px;height:44px;margin:0 auto 14px;
-  display:grid;place-items:center;
-  border-radius:12px;background:var(--surface-2);
-  color:var(--text-3);
-}
+.empty-state{text-align:center;padding:60px 20px;color:var(--text-3)}
+.empty-state-icon{width:44px;height:44px;margin:0 auto 14px;display:grid;place-items:center;border-radius:12px;background:var(--surface-2);color:var(--text-3)}
 .empty-state-icon svg{width:22px;height:22px}
 .empty-state-title{font-size:14px;font-weight:600;color:var(--text-2);margin-bottom:4px}
 .empty-state-text{font-size:12.5px}
-
-/* utility */
 .empty{color:var(--text-3)}
 table{border-collapse:collapse;width:100%}
-
 @media(max-width:600px){
   main{padding:16px 14px 40px}
   .app-header-inner{padding:12px 16px}
@@ -772,7 +448,6 @@ const SCHEMA={
  'request-disposition':{rfc:'RFC 3841',kind:'token-list',params:['disposition-token']}
 };
 
-/* ---------- RFC Parameter Dictionary metadata ---------- */
 const PARAM_META={
  'via':{grammar:'Via = ("Via" / "v") HCOLON via-value *(COMMA via-value)',value:'sent-protocol sent-by *(SEMI via-params)',note:'The Via value identifies the transport and response destination. branch is transaction related; rport is defined by RFC 3581.',p:{ttl:['decimal','Hop-limit style parameter on a Via value.','Focus'],maddr:['host','Multicast address parameter.','Focus'],received:['host','Actual source IP learned from transport processing.','Focus'],branch:['token','Transaction branch identifier. Compare structurally but treat the value as generated when masking is enabled.','Generated'],rport:['flag / decimal','RFC 3581 parameter; present initially as a flag and may be populated with the received source port.','Focus'],generic:['extension','Other generic Via extension parameter allowed by the grammar.','Focus']}},
  'from':{grammar:'From = ("From" / "f") HCOLON from-spec',value:'name-addr / addr-spec *(SEMI from-param)',note:'tag is the dialog-identifying parameter. URI parameters and header parameters are distinct.',p:{tag:['token','Dialog-identifying tag parameter.','Generated'],generic:['extension','Generic extension parameter.','Focus']}},
@@ -1257,9 +932,11 @@ function compareSDPLine2(a,b,o){
  const focus=rows.filter(f=>!f.informational&&['chg','L','R'].includes(f.st)).length;
  return {rows,changed:focus,ignored:rows.filter(f=>f.st==='ignored').length};
 }
-function highlightSDP2(raw,sec,side){
+function highlightSDP2(raw,sec,side,o){
  const keys=changedKeys(sec),s=String(raw||'').trim();
  if(s.length<2||s[1]!=='=') return $q(raw);
+ /* one-sided lines: highlight the whole value */
+ if(keys.has('__whole__')) return $q(s.slice(0,2)+' ')+mark2(s.slice(2).trim(),true);
  const t=s[0],v=s.slice(2).trim(),lead=$q(s.slice(0,2)+' ');
  if(t==='o'){
   const a=v.split(/\s+/);
@@ -1294,7 +971,8 @@ function highlightSDP2(raw,sec,side){
     const pt=a[i];
     const mySig=sigs?sigs[idx]:null;
     const otherSig=other?other[idx]:null;
-    const differs=formatsChanged&&(!otherSig||mySig!==otherSig);
+    /* only mark if this specific payload slot differs on both sides */
+    const differs=formatsChanged&&otherSig!==undefined&&mySig!==undefined&&mySig!==otherSig;
     out+=' '+(differs?mark2(pt,true):$q(pt));
    }
    return out;
@@ -1374,11 +1052,13 @@ function highlightVia2(raw,keys){
  const tailOut=spans.length?applySpans(tailPart,spans):$q(tailPart);
  return baseOut+tailOut;
 }
-function highlightHeaderRaw2(sec,side){
+function highlightHeaderRaw2(sec,side,o){
  const raw=sec.raw?.[side]; if(raw===undefined||raw===null)return '<span class="empty">—</span>';
+ /* Focus off → no inline emphasis. Section still renders. */
+ if(o&&!o.focus) return $q(raw);
  const keys=changedKeys(sec); const k=sec.k;
  if(k==='via')return highlightVia2(raw,keys);
- if(k==='sdp')return highlightSDP2(raw,sec,side);
+ if(k==='sdp')return highlightSDP2(raw,sec,side,o);
  if(k==='start'){
   const m=String(raw).match(/^(\S+)(\s+)(\S+)(\s+SIP\/2\.0)$/);
   if(m){
@@ -1420,11 +1100,12 @@ function highlightHeaderRaw2(sec,side){
 
 function renderSection3(sec,o){
  const hasInfo=sec.fields.some(f=>f.informational&&f.st!=='same');
- if(o.focus&&sec.changed===0&&!hasInfo)return '';
+ /* Bug fix: only `Only changed` filters out identical sections. */
+ if(o.only&&sec.changed===0&&!hasInfo)return '';
  const n=sec.changed,ignored=sec.fields.filter(f=>f.st==='ignored').length;
  const badge=n?'<span class="inline-badge diff">'+n+' change'+(n>1?'s':'')+'</span>':ignored?'<span class="inline-badge same">RFC-generated / ignored</span>':hasInfo?'<span class="inline-badge info">informational</span>':'<span class="inline-badge same">same</span>';
  const name='<div class="inline-diff-name">'+E(sec.name)+badge+'<span class="inline-rfc">'+E(sec.rfc)+'</span></div>';
- const l=highlightHeaderRaw2(sec,0),r=highlightHeaderRaw2(sec,1);
+ const l=highlightHeaderRaw2(sec,0,o),r=highlightHeaderRaw2(sec,1,o);
  return '<div class="inline-diff-row">'+name+'<div class="inline-side left">'+l+'</div><div class="inline-side right">'+r+'</div></div>';
 }
 
@@ -1640,7 +1321,14 @@ function compareMessage2(a,b,o){
   }
   for(let i=0;i<pairs.length;i++){
    const p=pairs[i];
-   const c=p.l!==undefined&&p.r!==undefined?compareSDPLine2(p.l,p.r,opts):{rows:[{key:'line',name:'SDP line',l:p.l,r:p.r,st:p.l===undefined?'R':'L'}],changed:1,ignored:0};
+   /* Bug fix: one-sided SDP lines use `__whole__` so highlightSDP2 can
+      find them; otherwise the semantic key (a:rtpmap:<sig>) never matched. */
+   let c;
+   if(p.l!==undefined&&p.r!==undefined){
+    c=compareSDPLine2(p.l,p.r,opts);
+   }else{
+    c={rows:[{key:'__whole__',name:'SDP line',l:p.l,r:p.r,st:p.l===undefined?'R':'L'}],changed:1,ignored:0};
+   }
    out.push({name:k==='body'?'Body':'SDP '+k,k:'sdp',sdpLine:(p.l||p.r||'').slice(0,2),rfc:'SDP / RFC 4566'+((p.l||p.r||'').startsWith('o=')?' §5.2':(p.l||p.r||'').startsWith('c=')?' §5.7':(p.l||p.r||'').startsWith('m=')?' §5.14':''),raw:[p.l,p.r],fields:c.rows,changed:c.changed,ignored:c.ignored,ptMap:[codecTableL,codecTableR],sigs:[sigsL,sigsR]});
   }
  }
@@ -1648,7 +1336,7 @@ function compareMessage2(a,b,o){
 }
 
 /* ---------- UI ---------- */
-const S={},DIFF3=new Set(['chg','L','R']);
+const S={};
 const view=s=>S[s].all.filter(m=>!S[s].call||m.callId===S[s].call);const tm=m=>m.ts?new Date(m.ts*1000).toISOString().slice(11,23):'';
 function info(s){const x=S[s],v=view(s),u=v.filter(m=>m.proto==='UDP').length,t=v.filter(m=>m.proto==='TCP').length;$('i'+s).textContent=v.length+' SIP messages'+(u+t?' (UDP '+u+', TCP '+t+')':'')+(x.tls?'. '+x.tls+' TLS packets found: encrypted SIP cannot be decoded.':'')+(x.all.length?'':'. No SIP found.')}
 function setSide(s,raws,name,tls){S[s]={name,all:raws.map(r=>parseMsg(r.raw,r)),call:'',tls};const cs=new Map();S[s].all.forEach(m=>cs.set(m.callId,(cs.get(m.callId)||0)+1));$('n'+s).textContent=name;$('c'+s).innerHTML='<option value="">All calls ('+cs.size+')</option>'+[...cs].map(([k,n])=>'<option value="'+E(k)+'">'+E(k.slice(0,48))+' ('+n+' msgs)</option>').join('');info(s);run3()}
@@ -1656,7 +1344,7 @@ async function onFile(s,f){try{const b=await f.arrayBuffer(),m=b.byteLength>3?ne
 function changedKeys(sec){return new Set(sec.fields.filter(f=>!f.informational&&['chg','L','R'].includes(f.st)).map(f=>f.key))}
 function mark2(text,focus){return focus?'<span class="focus-value">'+$q(text)+'</span>':$q(text)}
 
-function run3(){if(!S.L||!S.R){$('out').innerHTML='';return}const o={mask:$('mask').checked,norm:$('norm').checked,focus:$('focus').checked,only:$('only').checked,ign:new Set($('ign').value.toLowerCase().split(/[ ,\s]+/).filter(Boolean).map(x=>C[x]||x))};const pr=alignMessages(view('L'),view('R'));let same=0,diff=0,l=0,r=0,h='';pr.forEach(([a,b],i)=>{if(!a||!b){const m=a||b,lbl=a?'LEFT':'RIGHT';a?l++:r++;h+='<details class="m" open><summary><b>#'+(i+1)+'</b> '+E(m.label)+'<span class="only">ONLY '+lbl+'</span><span class="mu">'+tm(m)+'</span></summary><pre>'+E(m.raw)+'</pre></details>';return}const sc=compareMessage2(a,b,o);const n=sc.reduce((t,x)=>t+x.changed,0);n?diff++:same++;const viewSecs=o.only?sc.filter(sec=>sec.changed>0||sec.fields.some(f=>f.informational&&f.st!=='same')):sc;const secsHtml=viewSecs.map(sec=>renderSection3(sec,o)).join('');h+='<details class="m"'+(n?' open':'')+'><summary><b>#'+(i+1)+'</b> '+E(a.label)+' vs '+E(b.label)+(n?'<span class="bd">'+n+' focused difference'+(n>1?'s':'')+'</span>':'<span class="ok">IDENTICAL</span>')+'<span class="mu">'+tm(a)+' | '+tm(b)+'</span></summary><div class="inline-diff">'+secsHtml+'</div></details>'});$('sum').innerHTML=pr.length+' message slots: <b>'+same+'</b> identical, <b>'+diff+'</b> with focused differences, <b>'+l+'</b> only left, <b>'+r+'</b> only right.';$('out').innerHTML=h}
+function run3(){if(!S.L||!S.R){$('out').innerHTML='';return}const o={mask:$('mask').checked,norm:$('norm').checked,focus:$('focus').checked,only:$('only').checked,ign:new Set($('ign').value.toLowerCase().split(/[ ,\s]+/).filter(Boolean).map(x=>C[x]||x))};const pr=alignMessages(view('L'),view('R'));let same=0,diff=0,l=0,r=0,h='';pr.forEach(([a,b],i)=>{if(!a||!b){const m=a||b,lbl=a?'LEFT':'RIGHT';a?l++:r++;h+='<details class="m" open><summary><b>#'+(i+1)+'</b> '+E(m.label)+'<span class="only">ONLY '+lbl+'</span><span class="mu">'+tm(m)+'</span></summary><pre>'+E(m.raw)+'</pre></details>';return}const sc=compareMessage2(a,b,o);const n=sc.reduce((t,x)=>t+x.changed,0);n?diff++:same++;/* Section-level filter is handled inside renderSection3 via o.only. */const viewSecs=sc;const secsHtml=viewSecs.map(sec=>renderSection3(sec,o)).join('');h+='<details class="m"'+(n?' open':'')+'><summary><b>#'+(i+1)+'</b> '+E(a.label)+' vs '+E(b.label)+(n?'<span class="bd">'+n+' focused difference'+(n>1?'s':'')+'</span>':'<span class="ok">IDENTICAL</span>')+'<span class="mu">'+tm(a)+' | '+tm(b)+'</span></summary><div class="inline-diff">'+secsHtml+'</div></details>'});$('sum').innerHTML=pr.length+' message slots: <b>'+same+'</b> identical, <b>'+diff+'</b> with focused differences, <b>'+l+'</b> only left, <b>'+r+'</b> only right.';$('out').innerHTML=h}
 function save(s){const t=view(s).map(m=>m.raw.replace(/\r\n/g,'\n').trim()).join('\n\n')+'\n',a=document.createElement('a');a.href=URL.createObjectURL(new Blob([t],{type:'text/plain'}));a.download=S[s].name.replace(/\.[^.]+$/,'')+'.sip.txt';a.click()}
 $('panels').innerHTML=['L','R'].map(s=>'<section class="pn"><h2>'+(s==='L'?'Left':'Right')+'</h2><label class="btn">Upload pcap, pcapng or text<input type="file" id="f'+s+'" accept=".pcap,.pcapng,.cap,.txt,.log,.sip" hidden></label> <span class="mu" id="n'+s+'">No file loaded</span><details><summary class="mu">Or paste SIP text</summary><textarea id="t'+s+'" rows="6" placeholder="Paste one or more SIP messages"></textarea><button data-p="'+s+'">Load text</button></details><div class="bar"><select id="c'+s+'"><option value="">All calls</option></select><button data-v="'+s+'">Save as plain text</button></div><div class="mu" id="i'+s+'"></div></section>').join('');
 for(const s of['L','R']){$('f'+s).onchange=e=>{const f=e.target.files[0];e.target.value='';f&&onFile(s,f)};$('c'+s).onchange=e=>{S[s].call=e.target.value;info(s);run3()}}
