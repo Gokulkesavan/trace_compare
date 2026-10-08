@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>SIP Compare v2</title>
+<title>SIP Compare v10 — RFC Semantic Focus + SDP Semantic Parsing</title>
 <style>
 :root{--bg:#fff;--fg:#1c2128;--mu:#6b7280;--bd:#d8dee4;--pn:#f6f8fa;--add:#d3f0dc;--del:#fbd9d9;--chg:#fff0b8;--ign:#eef1f4;--ac:#2f6fed;--hdr:#eaf0f7}
 @media(prefers-color-scheme:dark){:root{--bg:#0f1317;--fg:#e6e8eb;--mu:#8b95a1;--bd:#2b333c;--pn:#171c22;--add:#173a26;--del:#4a1f22;--chg:#4a3f14;--ign:#252b32;--ac:#4f86f0;--hdr:#18222c}}
@@ -19,21 +19,29 @@ tr.section th{background:var(--hdr);font-weight:700;color:var(--fg)}
 .diff-del{background:var(--del);text-decoration:line-through;border-radius:2px}.diff-add{background:var(--add);border-radius:2px}.diff-ign{background:var(--ign);color:var(--mu);border-radius:2px}
 .empty{color:var(--mu)}.legend{display:flex;flex-wrap:wrap;gap:10px;margin:7px 0 10px;font-size:12px}.legend span{padding:2px 7px;border-radius:10px}.legend .a{background:var(--add)}.legend .d{background:var(--del)}.legend .c{background:var(--chg)}.legend .i{background:var(--ign);color:var(--mu)}
 pre{margin:0;padding:8px 12px;font:12px ui-monospace,Menlo,Consolas,monospace;white-space:pre-wrap}
-
-/* v3 RFC-focused UI */
-.header-card{border:1px solid var(--bd);border-radius:7px;margin:7px 0;background:var(--bg);overflow:hidden}.header-card>summary{list-style:none;padding:9px 11px;cursor:pointer;background:var(--pn)}.header-card>summary::-webkit-details-marker{display:none}.hdr-title{display:flex;align-items:center;gap:7px;flex-wrap:wrap}.rfc-note{font-size:11px;color:var(--mu);margin-top:2px}.raw-pair{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:7px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px}.raw-pair>div{border:1px solid var(--bd);border-radius:5px;padding:6px;background:var(--bg)}.side-label{display:block;color:var(--mu);font:10px system-ui,sans-serif;margin-bottom:3px}.count-badge,.same-badge,.ignored-count,.ignored-badge,.focus-badge,.left-badge,.right-badge{display:inline-flex;align-items:center;border-radius:10px;padding:2px 7px;font:600 10px system-ui,sans-serif;letter-spacing:.2px}.count-badge,.focus-badge{background:var(--chg)}.same-badge{background:var(--add)}.ignored-count,.ignored-badge{background:var(--ign);color:var(--mu)}.left-badge{background:var(--del)}.right-badge{background:var(--add)}.field-table{width:100%;border-collapse:collapse}.field-table th,.field-table td{padding:5px 8px;border-top:1px solid var(--bd);vertical-align:top;font:12px/1.4 ui-monospace,Menlo,Consolas,monospace;text-align:left}.field-table th:first-child{width:20%;font-family:system-ui,sans-serif;font-weight:600}.field-table th:last-child{width:130px;font-family:system-ui,sans-serif}.field.focus td{background:var(--chg)}.field.focus .fieldname{border-left:4px solid var(--ac);padding-left:4px;font-weight:700}.field.ignored td{background:var(--ign);color:var(--mu)}.field.left-only td{background:var(--del)}.field.right-only td{background:var(--add)}.focus-empty{padding:12px!important}.message-focus{padding:3px 8px 10px}.message-focus>.header-card:first-child{margin-top:8px}@media(max-width:900px){.raw-pair{grid-template-columns:1fr}.field-table th:first-child{width:28%}}
+.header-card{border:1px solid var(--bd);border-radius:7px;margin:7px 0;background:var(--bg);overflow:hidden}.header-card>summary{list-style:none;padding:9px 11px;cursor:pointer;background:var(--pn)}.header-card>summary::-webkit-details-marker{display:none}.hdr-title{display:flex;align-items:center;gap:7px;flex-wrap:wrap}.rfc-note{font-size:11px;color:var(--mu);margin-top:2px}.raw-pair{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:7px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px}.raw-pair>div{border:1px solid var(--bd);border-radius:5px;padding:6px;background:var(--bg)}.side-label{display:block;color:var(--mu);font:10px system-ui,sans-serif;margin-bottom:3px}.count-badge,.same-badge,.ignored-count,.ignored-badge,.focus-badge,.left-badge,.right-badge{display:inline-flex;align-items:center;border-radius:10px;padding:2px 7px;font:600 10px system-ui,sans-serif;letter-spacing:.2px}.count-badge,.focus-badge{background:var(--chg)}.same-badge{background:var(--add)}.ignored-count,.ignored-badge{background:var(--ign);color:var(--mu)}.left-badge{background:var(--del)}.right-badge{background:var(--add)}.field-table{width:100%;border-collapse:collapse}.field-table th,.field-table td{padding:5px 8px;border-top:1px solid var(--bd);vertical-align:top;font:12px/1.4 ui-monospace,Menlo,Consolas,monospace;text-align:left}.field-table th:first-child{width:20%;font-family:system-ui,sans-serif;font-weight:600}.field-table th:last-child{width:auto;font-family:system-ui,sans-serif}.field.focus .fieldname{border-left:3px solid var(--ac);padding-left:5px;font-weight:700}.field.focus .focus-value{background:var(--chg);border-radius:3px;padding:1px 3px;font-weight:600}.field.ignored td{background:transparent;color:var(--mu)}.field.ignored .fieldname{color:var(--mu)}.field.left-only td:nth-child(2){background:var(--del)}.field.right-only td:nth-child(3){background:var(--add)}.focus-empty{padding:12px!important}.message-focus{padding:3px 8px 10px}.message-focus>.header-card:first-child{margin-top:8px}
+.inline-diff{border:1px solid var(--bd);border-radius:7px;margin:6px 0;background:var(--bg);overflow:hidden}.inline-diff-row{display:grid;grid-template-columns:180px minmax(0,1fr) minmax(0,1fr);gap:0;border-top:1px solid var(--bd);font:12px/1.4 ui-monospace,Menlo,Consolas,monospace}.inline-diff-row:first-child{border-top:0}.inline-diff-name{padding:7px 9px;font:600 11px/1.3 system-ui,sans-serif;background:var(--pn);border-right:1px solid var(--bd)}.inline-side{padding:7px 9px;min-width:0;white-space:pre-wrap;word-break:break-word}.inline-side.left{border-right:1px solid var(--bd)}.inline-side .focus-value{background:var(--chg);border-radius:3px;padding:1px 3px;font-weight:700}.inline-side .generated-value{color:var(--mu)}.inline-side .only-value{background:var(--add);border-radius:3px;padding:1px 3px;font-weight:700}.inline-rfc{display:block;margin-top:2px;color:var(--mu);font:10px/1.3 system-ui,sans-serif}.inline-badge{display:inline-flex;align-items:center;border-radius:9px;padding:1px 6px;margin-left:5px;font:600 9px system-ui,sans-serif}.inline-badge.diff{background:var(--chg)}.inline-badge.same{background:var(--add)}.inline-badge.only{background:var(--del)}.inline-badge.info{background:var(--ign);color:var(--mu)}@media(max-width:900px){.inline-diff-row{grid-template-columns:130px 1fr}.inline-side.right{border-top:1px solid var(--bd);grid-column:2}.inline-side.left{grid-column:2}.inline-diff-name{grid-row:span 2}}
+.dict{border:1px solid var(--bd);border-radius:8px;background:var(--pn);margin:12px 0;padding:0}.dict>summary{list-style:none;cursor:pointer;padding:9px 10px}.dict>summary::-webkit-details-marker{display:none}.dict-body{padding:0 10px 10px}.dict-head{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.dict-head strong{font-size:14px}.dict-head select,.dict-head input{min-width:230px}.dict-grid{display:grid;grid-template-columns:1.15fr 2fr;gap:10px;margin-top:10px}.dict-box{background:var(--bg);border:1px solid var(--bd);border-radius:6px;padding:9px}.dict-box h3{margin:0 0 6px;font:600 12px system-ui,sans-serif}.dict-meta{font-size:11px;color:var(--mu)}.dict-grammar{font:12px/1.45 ui-monospace,Menlo,Consolas,monospace;white-space:pre-wrap}.dict-table{width:100%;border-collapse:collapse}.dict-table th,.dict-table td{border-top:1px solid var(--bd);padding:5px 7px;font:12px/1.35 system-ui,sans-serif;text-align:left;vertical-align:top}.dict-table th{background:var(--hdr)}.dict-table th:nth-child(1){width:18%}.dict-table th:nth-child(2){width:18%}.dict-table th:nth-child(3){width:38%}.dict-table th:nth-child(4){width:26%}.dict-std{background:var(--add);border-radius:10px;padding:1px 6px;font:600 10px system-ui,sans-serif}.dict-gen{background:var(--ign);color:var(--mu);border-radius:10px;padding:1px 6px;font:600 10px system-ui,sans-serif}.dict-focus{background:var(--chg);border-radius:10px;padding:1px 6px;font:600 10px system-ui,sans-serif}.dict-code{font:11px ui-monospace,Menlo,Consolas,monospace}.dict-note{margin-top:8px;font-size:11px;color:var(--mu)}.dict-empty{color:var(--mu);padding:10px 0}@media(max-width:900px){.raw-pair{grid-template-columns:1fr}.field-table th:first-child{width:28%}.dict-grid{grid-template-columns:1fr}}
 </style></head>
 <body><main>
 <h1>SIP Compare</h1>
-<div class="mu">SIP-aware comparison: message alignment, header matching, generated-identifier masking, IPv4/IPv6 fragment handling, and inline differences. Everything runs locally in the browser.</div>
+<div class="mu">SIP-aware comparison: RFC-structured headers and SDP fields, generated-identifier masking, IPv4/IPv6 fragment handling, and inline component-level differences. Everything runs locally in the browser.</div>
 <div class="grid" id="panels"></div>
 <div class="bar">
- <label><input type="checkbox" id="mask" checked> RFC-generated identifiers are non-focus fields</label>
- <label><input type="checkbox" id="norm" checked> Normalize RFC-allowed parameter/list order</label>
+ <label><input type="checkbox" id="mask" checked> Treat RFC-generated identifiers as non-focus</label>
+ <label><input type="checkbox" id="norm" checked> Normalize order where the RFC grammar permits it</label>
+ <label><input type="checkbox" id="focus" checked> Focus changed fields</label>
  <label><input type="checkbox" id="only"> Only changed headers/lines</label>
  <label>Ignore headers: <input type="text" id="ign" value="Date" size="22"></label>
 </div>
-<div class="legend"><span class="a">added / right-only</span><span class="d">removed / left-only</span><span class="c">changed</span><span class="i">ignored/generated value</span></div>
+<details class="dict">
+ <summary class="dict-head"><strong>RFC Parameter Dictionary</strong><span class="dict-meta">SIP header/URI grammar and comparison policy</span></summary>
+ <div class="dict-body">
+ <div class="dict-head" style="margin-top:8px"><select id="dictHeader"></select><input id="dictSearch" type="text" placeholder="Filter parameter or description"></div>
+ <div id="dictDetail"></div>
+ </div>
+</details>
+<div class="legend"><span class="a">right-only</span><span class="d">left-only</span><span class="c">focused change</span><span class="i">RFC-generated / ignored</span></div>
 <div id="sum" class="mu">Load a capture or text on both sides to compare.</div><div id="out"></div>
 <script>
 const $=i=>document.getElementById(i),E=s=>String(s).replace(/[&<>\"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -41,7 +49,6 @@ const C={i:'call-id',m:'contact',e:'content-encoding',l:'content-length',c:'cont
 const SIP=/^(SIP\/2\.0 \d{3}|[A-Z]+\s+\S+\s+SIP\/2\.0)/;
 const LIST=new Set(['via','route','record-route','path','service-route','history-info','supported','allow','require','proxy-require','unsupported','contact','accept','accept-encoding','accept-language','allow-events','p-asserted-identity','privacy','join','replaces']);
 const ORDERED=new Set(['via','route','record-route','path','service-route','history-info']);
-const SET_HEADERS=new Set(['supported','allow','require','proxy-require','unsupported','accept','accept-encoding','accept-language','allow-events','contact','p-asserted-identity','privacy']);
 const rd16=(d,o)=>d[o]<<8|d[o+1],rd32=(d,o)=>((d[o]<<24)|(d[o+1]<<16)|(d[o+2]<<8)|d[o+3])>>>0;
 const ip4=(d,o)=>d.subarray(o,o+4).join('.');
 const ip6=(d,o)=>{const a=[];for(let i=0;i<16;i+=2)a.push(rd16(d,o+i).toString(16));return a.join(':')};
@@ -106,6 +113,7 @@ const SCHEMA={
  'record-route':{rfc:'RFC 3261 §20.30',kind:'nameaddr',params:['generic']},
  'path':{rfc:'RFC 3327',kind:'nameaddr',params:['generic']},
  'service-route':{rfc:'RFC 3608',kind:'nameaddr',params:['generic']},
+ 'history-info':{rfc:'RFC 7044',kind:'nameaddr',params:['index','rc','mp','np','generic']},
  'reply-to':{rfc:'RFC 3261 §20.33',kind:'nameaddr',params:['generic']},
  'refer-to':{rfc:'RFC 3515 §2.1',kind:'nameaddr',params:['generic']},
  'referred-by':{rfc:'RFC 3892',kind:'nameaddr',params:['generic']},
@@ -149,9 +157,168 @@ const SCHEMA={
  'privacy':{rfc:'RFC 3325 §9.3',kind:'token-list',params:['privacy-type']},
  'request-disposition':{rfc:'RFC 3841',kind:'token-list',params:['disposition-token']}
 };
-const LIST2=new Set(['via','route','record-route','path','service-route','contact','accept','accept-encoding','accept-language','allow','supported','require','proxy-require','unsupported','allow-events','p-asserted-identity','p-preferred-identity','p-associated-uri','p-called-party-id','p-visited-network-id','security-client','security-server','security-verify','privacy','reason','event']);
-const ORDERED2=new Set(['via','route','record-route','path','service-route']);
+
+/* ---------- RFC Parameter Dictionary metadata ---------- */
+const PARAM_META={
+ 'via':{grammar:'Via = ("Via" / "v") HCOLON via-value *(COMMA via-value)',value:'sent-protocol sent-by *(SEMI via-params)',note:'The Via value identifies the transport and response destination. branch is transaction related; rport is defined by RFC 3581.',p:{ttl:['decimal','Hop-limit style parameter on a Via value.','Focus'],maddr:['host','Multicast address parameter.','Focus'],received:['host','Actual source IP learned from transport processing.','Focus'],branch:['token','Transaction branch identifier. Compare structurally but treat the value as generated when masking is enabled.','Generated'],rport:['flag / decimal','RFC 3581 parameter; present initially as a flag and may be populated with the received source port.','Focus'],generic:['extension','Other generic Via extension parameter allowed by the grammar.','Focus']}},
+ 'from':{grammar:'From = ("From" / "f") HCOLON from-spec',value:'name-addr / addr-spec *(SEMI from-param)',note:'tag is the dialog-identifying parameter. URI parameters and header parameters are distinct.',p:{tag:['token','Dialog-identifying tag parameter.','Generated'],generic:['extension','Generic extension parameter.','Focus']}},
+ 'to':{grammar:'To = ("To" / "t") HCOLON to-spec',value:'name-addr / addr-spec *(SEMI to-param)',note:'tag is the dialog-identifying parameter on the To header.',p:{tag:['token','Dialog-identifying tag parameter.','Generated'],generic:['extension','Generic extension parameter.','Focus']}},
+ 'contact':{grammar:'Contact = ("Contact" / "m") HCOLON ( STAR / (contact-param *(COMMA contact-param)) )',value:'name-addr [; q=] [; expires=] [; generic-param]',note:'URI parameters belong to the URI inside < >; q and expires are Contact header parameters.',p:{q:['qvalue','Contact preference value.','Focus'],expires:['delta-seconds','Registration/contact expiration interval in the Contact header.','Focus'],generic:['extension','Generic Contact extension parameter.','Focus']}},
+ 'route':{grammar:'Route = "Route" HCOLON route-param *(COMMA route-param)',value:'name-addr *(; generic-param)',note:'Route parameters are attached to the header value; URI parameters remain part of the URI.',p:{generic:['extension','Generic parameter on a Route value.','Focus']}},
+ 'record-route':{grammar:'Record-Route = "Record-Route" HCOLON rec-route *(COMMA rec-route)',value:'name-addr *(; generic-param)',note:'Record-Route is an ordered routing set in the SIP dialog path.',p:{generic:['extension','Generic parameter on a Record-Route value.','Focus']}},
+ 'path':{grammar:'Path = "Path" HCOLON path-value *(COMMA path-value)',value:'name-addr *(; generic-param)',note:'Defined by RFC 3327 for registration path information.',p:{generic:['extension','Generic extension parameter.','Focus']}},
+ 'service-route':{grammar:'Service-Route = "Service-Route" HCOLON sr-value *(COMMA sr-value)',value:'name-addr *(; generic-param)',note:'Defined by RFC 3608; routing information for subsequent requests.',p:{generic:['extension','Generic extension parameter.','Focus']}},
+ 'history-info':{grammar:'History-Info = "History-Info" HCOLON hi-entry *(COMMA hi-entry)',value:'name-addr *(; hi-param)',note:'RFC 7044 records the history of a request. Order is significant.',p:{index:['integer','History index value.','Focus'],rc:['integer','Retargeting cause.','Focus'],mp:['token','Multiplicity indicator.','Focus'],np:['token','New party indicator.','Focus'],generic:['extension','Generic History-Info parameter.','Focus']}},
+ 'reply-to':{grammar:'Reply-To = "Reply-To" HCOLON rplyto',value:'name-addr *(; generic-param)',note:'The target address supplied for replies outside normal dialog routing.',p:{generic:['extension','Generic extension parameter.','Focus']}},
+ 'refer-to':{grammar:'Refer-To = "Refer-To" HCOLON refer-to-uri',value:'name-addr / URI with extension parameters',note:'Reference target used by REFER; the URI itself may contain URI parameters.',p:{generic:['extension','Extension parameter if supplied by the relevant syntax.','Focus']}},
+ 'referred-by':{grammar:'Referred-By = "Referred-By" HCOLON referring-uri',value:'name-addr [;ref-param]',note:'Referral identity and optional parameters defined by RFC 3892.',p:{generic:['extension','Generic/relevant extension parameter.','Focus']}},
+ 'p-asserted-identity':{grammar:'P-Asserted-Identity = "P-Asserted-Identity" HCOLON P-A-I','value':'name-addr / addr-spec *(COMMA name-addr / addr-spec)','note':'Identity values are URI/name-address values; do not treat URI parameters as header parameters.',p:{none:['—','No RFC-defined semicolon header-parameter set; parse parameters as part of the contained URI when applicable.','Focus']}},
+ 'p-preferred-identity':{grammar:'P-Preferred-Identity = "P-Preferred-Identity" HCOLON P-A-I','value':'name-addr / addr-spec','note':'Preferred identity supplied by the user agent; URI structure is separate from header parameters.',p:{none:['—','No distinct RFC-defined header parameter set in the header value.','Focus']}},
+ 'p-associated-uri':{grammar:'P-Associated-URI = "P-Associated-URI" HCOLON P-A-U *(COMMA P-A-U)','value':'name-addr *(; generic-param)',note:'IMS associated URI information.',p:{generic:['extension','Generic extension parameter.','Focus']}},
+ 'p-called-party-id':{grammar:'P-Called-Party-ID = "P-Called-Party-ID" HCOLON P-C-P-I','value':'name-addr / addr-spec','note':'Called-party identification used in the 3GPP SIP extension set.',p:{generic:['extension','Generic extension parameter where the RFC grammar permits it.','Focus']}},
+ 'p-visited-network-id':{grammar:'P-Visited-Network-ID = "P-Visited-Network-ID" HCOLON network-prov *(COMMA network-prov)','value':'quoted-string / token *(; generic-param)',note:'Visited-network identifier and extension parameters.',p:{generic:['extension','Generic extension parameter.','Focus']}},
+ 'p-access-network-info':{grammar:'P-Access-Network-Info = "P-Access-Network-Info" HCOLON access-info','value':'access-type *(; access-info-params)',note:'Access-network information is highly deployment-specific; registered extension parameters matter.',p:{generic:['extension','Generic or access-network-specific parameter.','Focus']}},
+ 'p-charging-function-addresses':{grammar:'P-Charging-Function-Addresses = ... *(SEMI charging-func-addr-param)','value':'ccf / ecf / generic parameters','note':'Charging-function addresses use named parameters for CCF/ECF information.',p:{ccf:['URI / address','Charging Collection Function address.', 'Focus'],ecf:['URI / address','Event Charging Function address.','Focus'],generic:['extension','Generic charging parameter.','Focus']}},
+ 'p-charging-vector':{grammar:'P-Charging-Vector = ... *(SEMI pcv-param)','value':'icid-value plus charging/vector parameters','note':'Important for IMS charging correlation. Compare each parameter independently rather than the full line.',p:{'icid-value':['token','Interoperator Charging Identifier value.','Focus'],'icid-generated-at':['host','Node that generated the ICID.', 'Focus'],'orig-ioi':['token','Originating Inter Operator Identifier.','Focus'],'term-ioi':['token','Terminating Inter Operator Identifier.','Focus'],'transit-ioi':['token','Transit IOI information.','Focus'],'related-icid':['token','Related ICID correlation value.','Focus'],generic:['extension','Generic charging-vector parameter.','Focus']}},
+ 'call-id':{grammar:'Call-ID = "Call-ID" HCOLON callid','value':'callid','note':'The Call-ID itself is the dialog/call correlation value. It is not a semicolon-parameter list.',p:{id:['token / opaque','Generated globally unique identifier used for SIP dialog/call correlation.','Generated']}},
+ 'cseq':{grammar:'CSeq = "CSeq" HCOLON 1*DIGIT LWS Method','value':'sequence number + method','note':'The sequence number is semantically meaningful; do not mask it as random data. Method is case-sensitive per RFC 3261 §7.1.',p:{number:['integer','SIP sequence number.','Focus'],method:['token','Method associated with the CSeq number.','Focus']}},
+ 'rseq':{grammar:'RSeq = "RSeq" HCOLON response-num','value':'response number','note':'Reliable provisional response sequence number defined by RFC 3262.',p:{number:['integer','RSeq response number.','Focus']}},
+ 'rack':{grammar:'RAck = "RAck" HCOLON response-num LWS CSeq-num LWS Method','value':'RSeq + CSeq number + method','note':'RAck correlates a PRACK with a reliable provisional response.',p:{'rseq':['integer','Reliable provisional response sequence number being acknowledged.','Focus'],'cseq':['integer','CSeq sequence number being acknowledged.','Focus'],'method':['token','Method associated with the CSeq being acknowledged.','Focus']}},
+ 'max-forwards':{grammar:'Max-Forwards = "Max-Forwards" HCOLON 1*3DIGIT','value':'integer','note':'Hop limit; proxies decrement it.',p:{none:['—','No parameters. The numeric value itself is semantically important.','Focus']}},
+ 'content-length':{grammar:'Content-Length = ("Content-Length" / "l") HCOLON 1*DIGIT','value':'integer octets','note':'Exact body length in octets.',p:{none:['—','No parameters.','Focus']}},
+ 'content-type':{grammar:'Content-Type = ("Content-Type" / "c") HCOLON media-type','value':'type/subtype *(; parameter)','note':'Media type parameters are part of the MIME content type and must be compared separately from the base media type.',p:{'media-type-params':['parameter','MIME media-type parameters.','Focus']}},
+ 'content-encoding':{grammar:'Content-Encoding = ("Content-Encoding" / "e") HCOLON content-coding *(COMMA content-coding)','value':'encoding token list','note':'Content coding values are tokens; order is a list property rather than a semicolon parameter grammar.',p:{none:['—','No semicolon parameters.','Focus']}},
+ 'content-language':{grammar:'Content-Language = ("Content-Language" / "l") HCOLON language-tag *(COMMA language-tag)','value':'language tag list','note':'Language tags are compared as list items.',p:{none:['—','No semicolon parameters.','Focus']}},
+ 'supported':{grammar:'Supported = ("Supported" / "k") HCOLON option-tag *(COMMA option-tag)','value':'option-tag list','note':'Capability option tags; compare as a set when order is not semantically significant. Option-tags are case-insensitive.',p:{'option-tag':['token','Supported extension identifier.','Focus']}},
+ 'require':{grammar:'Require = "Require" HCOLON option-tag *(COMMA option-tag)','value':'option-tag list','note':'Required SIP option tags.',p:{'option-tag':['token','Required extension identifier.','Focus']}},
+ 'proxy-require':{grammar:'Proxy-Require = "Proxy-Require" HCOLON option-tag *(COMMA option-tag)','value':'option-tag list','note':'Proxy-required option tags.',p:{'option-tag':['token','Proxy capability requirement.','Focus']}},
+ 'unsupported':{grammar:'Unsupported = "Unsupported" HCOLON option-tag *(COMMA option-tag)','value':'option-tag list','note':'Option tags unsupported by the responding entity.',p:{'option-tag':['token','Unsupported extension identifier.','Focus']}},
+ 'allow':{grammar:'Allow = "Allow" HCOLON Method *(COMMA Method)','value':'method token list','note':'Advertised SIP methods. Method names are compared case-sensitively per RFC 3261 §7.1.',p:{method:['token','SIP method token.','Focus']}},
+ 'allow-events':{grammar:'Allow-Events = ("Allow-Events" / "u") HCOLON event-type *(COMMA event-type)','value':'event package token list','note':'Supported event packages.',p:{'event-type':['token','Event package identifier.','Focus']}},
+ 'accept':{grammar:'Accept = "Accept" HCOLON [ accept-range *(COMMA accept-range) ]','value':'media-range *(; media-range-param)','note':'Content negotiation media ranges and parameters.',p:{'media-range-params':['parameter','Media-range parameters such as q and extension parameters.','Focus']}},
+ 'accept-encoding':{grammar:'Accept-Encoding = ... content-coding *(SEMI accept-param)','value':'encoding token + parameters','note':'Encoding negotiation; qvalue is a defined parameter and generic parameters may occur.',p:{qvalue:['qvalue','Relative preference weight.','Focus'],generic:['extension','Generic extension parameter.','Focus']}},
+ 'accept-language':{grammar:'Accept-Language = ... language-range *(SEMI accept-param)','value':'language-range + parameters','note':'Language negotiation; qvalue expresses preference.',p:{qvalue:['qvalue','Relative preference weight.','Focus'],generic:['extension','Generic extension parameter.','Focus']}},
+ 'session-expires':{grammar:'Session-Expires = ("Session-Expires" / "x") HCOLON delta-seconds *(SEMI se-params)','value':'delta-seconds + refresher-param / generic-param','note':'The interval is semantically meaningful; refresher tells which side refreshes. Refresher value is case-insensitive.',p:{refresher:['uas / uac','Refresh responsibility.','Focus'],generic:['extension','Generic Session-Expires parameter.','Focus']}},
+ 'min-se':{grammar:'Min-SE = "Min-SE" HCOLON delta-seconds *(SEMI generic-param)','value':'delta-seconds + generic parameters','note':'Minimum acceptable session interval.',p:{generic:['extension','Generic extension parameter.','Focus']}},
+ 'expires':{grammar:'Expires = "Expires" HCOLON delta-seconds','value':'delta-seconds','note':'No header parameters in RFC 3261.',p:{none:['—','No parameters.','Focus']}},
+ 'retry-after':{grammar:'Retry-After = "Retry-After" HCOLON delta-seconds [comment] *(SEMI retry-param)','value':'delta-seconds + duration / generic parameters','note':'Retry timing; parameter syntax varies with the extension usage.',p:{duration:['delta-seconds','Optional duration parameter.','Focus'],generic:['extension','Generic extension parameter.','Focus']}},
+ 'reason':{grammar:'Reason = "Reason" HCOLON protocol *(COMMA protocol)','value':'protocol [;cause=] [;text=] *(; generic-param)','note':'Protocol result plus cause/text parameters.',p:{cause:['integer','Protocol-specific reason cause.','Focus'],text:['quoted-string','Human-readable reason text.','Focus'],generic:['extension','Generic extension parameter.','Focus']}},
+ 'event':{grammar:'Event = ("Event" / "o") HCOLON event-type *(SEMI event-param)','value':'event package *(; id= / generic-param)','note':'RFC 6665 matching uses event package and, when present, the id parameter.',p:{id:['token','Event package instance identifier.','Focus'],generic:['extension','Generic Event extension parameter.','Focus']}},
+ 'subscription-state':{grammar:'Subscription-State = "Subscription-State" HCOLON substate-value *(SEMI subexp-params)','value':'active / pending / terminated + reason / expires / retry-after / generic','note':'Subscription state is a value, with defined state parameters.',p:{reason:['token','Termination/transition reason.','Focus'],expires:['delta-seconds','Remaining subscription time.','Focus'], 'retry-after':['delta-seconds','Retry interval for terminated state.','Focus'],generic:['extension','Generic extension parameter.','Focus']}},
+ 'identity':{grammar:'Identity = "Identity" HCOLON signed-identity-digest *(SEMI ident-info)','value':'digest + info / alg / ppt / generic parameters','note':'Identity assertion metadata; digest and parameters should be compared independently.',p:{info:['URI','Certificate/service information URI.','Focus'],alg:['token','Signature/hash algorithm identifier.','Focus'],ppt:['token','PASSporT type.','Focus'],generic:['extension','Generic extension parameter.','Focus']}},
+ 'security-client':{grammar:'Security-Client = "Security-Client" HCOLON sec-mechanism *(COMMA sec-mechanism)','value':'mechanism + q / d-alg / d-qop / d-ver / generic','note':'Security mechanism negotiation fields.',p:{q:['qvalue','Mechanism preference.','Focus'],'d-alg':['token','Digest algorithm negotiation parameter.','Focus'],'d-qop':['token','Digest quality-of-protection parameter.','Focus'],'d-ver':['token','Verification value parameter.','Focus'],generic:['extension','Generic mechanism parameter.','Focus']}},
+ 'security-server':{grammar:'Security-Server = "Security-Server" HCOLON sec-mechanism *(COMMA sec-mechanism)',value:'mechanism + q / d-alg / d-qop / d-ver / generic',note:'Security mechanism response negotiation.',p:{q:['qvalue','Mechanism preference.','Focus'],'d-alg':['token','Digest algorithm negotiation parameter.','Focus'],'d-qop':['token','Digest quality-of-protection parameter.','Focus'],'d-ver':['token','Verification value parameter.','Focus'],generic:['extension','Generic mechanism parameter.','Focus']}},
+ 'security-verify':{grammar:'Security-Verify = "Security-Verify" HCOLON sec-mechanism *(COMMA sec-mechanism)',value:'mechanism + q / d-alg / d-qop / d-ver / generic',note:'Verification of negotiated security mechanisms.',p:{q:['qvalue','Mechanism preference.','Focus'],'d-alg':['token','Digest algorithm negotiation parameter.','Focus'],'d-qop':['token','Digest quality-of-protection parameter.','Focus'],'d-ver':['token','Verification value parameter.','Focus'],generic:['extension','Generic mechanism parameter.','Focus']}},
+ 'privacy':{grammar:'Privacy = "Privacy" HCOLON priv-value *(COMMA priv-value)',value:'privacy token list',note:'Privacy tokens are list values, not semicolon parameters.',p:{'privacy-type':['token','Privacy service token.','Focus']}},
+ 'request-disposition':{grammar:'Request-Disposition = "Request-Disposition" HCOLON directive *(COMMA directive)',value:'handling-token list',note:'RFC 3841 preference directives.',p:{'disposition-token':['token','Preference/handling directive.','Focus']}}
+};
+function dictParamRows(k){const sc=SCHEMA[k],d=PARAM_META[k];if(!d){return [['generic','extension','Generic SIP header parameter','Focus']]}const keys=sc?.params||[];return keys.map(n=>{const m=d.p?.[n]||['extension','RFC-defined or extension-specific parameter; inspect the header RFC.','Focus'];const policy=m[2]||'Focus';return [n,m[0],m[1],policy]})}
+function rfcHref(r){const m=String(r||'').match(/RFC\s+(\d+)/i);return m?'https://www.rfc-editor.org/rfc/rfc'+m[1]+'.html':''}
+function renderDict(){const sel=$('dictHeader'),q=($('dictSearch').value||'').toLowerCase().trim(),k=sel.value;if(k==='request-uri'){const rows=[['uri-scheme','token','URI scheme (sip/sips)'],['uri-user','userinfo','User part identifying the addressed resource'],['uri-password','password','Optional URI password component'],['uri-host','host / IPv4 / IPv6 reference','Host providing the SIP resource'],['uri-port','port','Explicit destination port'],['transport','token','URI transport parameter'],['user','token','URI user parameter'],['method','Method','URI method parameter'],['ttl','ttl','Multicast TTL URI parameter'],['maddr','host','Multicast address URI parameter'],['lr','flag','Loose-routing URI parameter'],['other-param','extension','Other URI parameter permitted by grammar'],['uri-header','hname=hvalue','Headers encoded after ? in the URI']].filter(r=>!q||r.join(' ').toLowerCase().includes(q));let h='<div class="dict-grid"><div class="dict-box"><h3>RFC / grammar</h3><div class="dict-meta"><a href="https://www.rfc-editor.org/rfc/rfc3261.html" target="_blank" rel="noopener">RFC 3261 §19.1 / §25.1</a></div><div class="dict-grammar">SIP-URI = "sip:" [userinfo] hostport uri-parameters [headers]</div><div class="dict-note">Request-URI is parsed into independent URI components. Percent-encoded unreserved characters are equal to their unencoded form; reserved characters stay distinct.</div></div><div class="dict-box"><h3>URI components</h3><table class="dict-table"><thead><tr><th>Component</th><th>Type</th><th>Meaning</th><th>Policy</th></tr></thead><tbody>'+(rows.length?rows.map(r=>'<tr><td class="dict-code">'+E(r[0])+'</td><td>'+E(r[1])+'</td><td>'+E(r[2])+'</td><td><span class="dict-focus">FOCUS</span></td></tr>').join(''):'<tr><td colspan="4" class="dict-empty">No dictionary item matches the filter.</td></tr>')+'</tbody></table></div></div>';
+ $('dictDetail').innerHTML=h;return;}const d=PARAM_META[k],sc=SCHEMA[k];if(!sc){$('dictDetail').innerHTML='<div class="dict-empty">No selected header.</div>';return}const rows=dictParamRows(k).filter(r=>!q||r.join(' ').toLowerCase().includes(q));const href=rfcHref(sc.rfc);const link=href?'<a href="'+href+'" target="_blank" rel="noopener">'+E(sc.rfc)+'</a>':E(sc.rfc);let h='<div class="dict-grid"><div class="dict-box"><h3>RFC / grammar</h3><div class="dict-meta">'+link+'</div><div class="dict-grammar">'+E(d?.grammar||'Header grammar is represented by the semantic parser schema.')+'</div><div class="dict-note">'+E(d?.note||'')+'</div></div><div class="dict-box"><h3>Allowed / recognized parameters</h3><table class="dict-table"><thead><tr><th>Parameter</th><th>Type</th><th>Meaning</th><th>Comparison policy</th></tr></thead><tbody>';if(rows.length===0)h+='<tr><td colspan="4" class="dict-empty">No dictionary item matches the filter.</td></tr>';for(const r of rows){const policy=r[3];const badge=policy==='Generated'?'<span class="dict-gen">GENERATED</span>':policy==='Focus'?'<span class="dict-focus">FOCUS</span>':'<span class="dict-std">'+E(policy)+'</span>';h+='<tr><td class="dict-code">'+E(r[0])+'</td><td>'+E(r[1])+'</td><td>'+E(r[2])+'</td><td>'+badge+'</td></tr>'}h+='</tbody></table><div class="dict-note"><b>generic</b> means the RFC grammar permits a generic/extension parameter; it does not mean every arbitrary parameter is necessarily valid. “Generated” means the comparator can de-emphasize that value when masking is enabled; it is still displayed.</div></div></div>';$('dictDetail').innerHTML=h}
+function initDict(){const sel=$('dictHeader');const keys=['request-uri',...Object.keys(SCHEMA).sort()];sel.innerHTML=keys.map(k=>'<option value="'+E(k)+'">'+E(k)+'</option>').join('');sel.value='request-uri';sel.onchange=renderDict;$('dictSearch').oninput=renderDict;renderDict()}
+const LIST2=new Set(['via','route','record-route','path','service-route','history-info','contact','accept','accept-encoding','accept-language','allow','supported','require','proxy-require','unsupported','allow-events','p-asserted-identity','p-preferred-identity','p-associated-uri','p-called-party-id','p-visited-network-id','security-client','security-server','security-verify','privacy','reason']);
+const ORDERED2=new Set(['via','route','record-route','path','service-route','history-info']);
 const $q=s=>String(s??'').replace(/[&<>\"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','\\':'&#92;','"':'&quot;'}[c]));
+
+/* ---------- normalisation helpers ---------- */
+function escRe(s){return String(s).replace(/[.*+?^${}()|[\]\\]/g,'\\$&')}
+function pctDecodeUnreserved(s){
+ return String(s||'').replace(/%([0-9A-Fa-f]{2})/g,(m,h)=>{
+  const c=parseInt(h,16),ch=String.fromCharCode(c);
+  if(/[A-Za-z0-9\-_.!~*'()]/.test(ch)) return ch;
+  return m;
+ });
+}
+function canonIPv6(addr){
+ const wrapped=addr.startsWith('[')&&addr.endsWith(']');
+ const a=wrapped?addr.slice(1,-1):addr;
+ if(a.indexOf(':')<0) return addr;
+ if(a.indexOf('.')>=0) return addr; // skip IPv4-embedded forms
+ const parts=a.split('::');
+ if(parts.length>2) return addr;
+ let left=parts[0]?parts[0].split(':'):[];
+ let right=parts.length===2?(parts[1]?parts[1].split(':'):[]):[];
+ if(parts.length===1){left=a.split(':');right=[]}
+ if(left.length+right.length>8) return addr;
+ const zeros=8-left.length-right.length;
+ const full=[...left,...new Array(zeros).fill('0'),...right];
+ const norm=full.map(x=>{try{return parseInt(x,16).toString(16)}catch(e){return x}});
+ let bestStart=-1,bestLen=0,curStart=-1,curLen=0;
+ for(let i=0;i<norm.length;i++){
+  if(norm[i]==='0'){if(curStart<0)curStart=i;curLen++;if(curLen>bestLen){bestLen=curLen;bestStart=curStart}}
+  else{curStart=-1;curLen=0}
+ }
+ let out;
+ if(bestLen>=2){
+  const before=norm.slice(0,bestStart).join(':');
+  const after=norm.slice(bestStart+bestLen).join(':');
+  out=before+'::'+after;
+  if(out.startsWith('::')&&!before)out='::'+after;
+  if(out.endsWith('::')&&!after)out=before+'::';
+  if(out==='::')out='::';
+ } else out=norm.join(':');
+ return wrapped?'['+out+']':out;
+}
+function normParamValue(name,value){
+ const v=String(value??'').trim();
+ if(name==='q'||name==='qvalue'){
+  const n=parseFloat(v);
+  if(!isNaN(n)) return String(n);
+ }
+ return v.toLowerCase();
+}
+
+function applySpans(raw,spans){
+ spans=spans.filter(s=>s.end>s.start).sort((a,b)=>a.start-b.start);
+ let out='',pos=0;
+ for(const sp of spans){
+  if(sp.start<pos)continue;
+  out+=$q(raw.slice(pos,sp.start));
+  out+='<span class="focus-value">'+$q(raw.slice(sp.start,sp.end))+'</span>';
+  pos=sp.end;
+ }
+ out+=$q(raw.slice(pos));
+ return out;
+}
+function paramValueSpans(raw,names){
+ const spans=[];
+ for(const name of names){
+  const re=new RegExp(';\\s*'+escRe(name)+'\\s*=\\s*','gi');
+  let m;
+  while((m=re.exec(raw))){
+   const vs=m.index+m[0].length;
+   let i=vs,inQ=false;
+   while(i<raw.length){
+    const c=raw[i];
+    if(c==='"'&&raw[i-1]!=='\\')inQ=!inQ;
+    else if(c===';'&&!inQ)break;
+    i++;
+   }
+   spans.push({start:vs,end:i});
+   re.lastIndex=i;
+  }
+ }
+ return spans;
+}
+function findAngle(s){
+ let lt=-1,inQ=false;
+ for(let i=0;i<s.length;i++){
+  const c=s[i];
+  if(c==='"'&&s[i-1]!=='\\')inQ=!inQ;
+  else if(c==='<'&&!inQ){lt=i;break}
+ }
+ if(lt<0)return null;
+ let gt=-1;inQ=false;
+ for(let i=lt+1;i<s.length;i++){
+  const c=s[i];
+  if(c==='"'&&s[i-1]!=='\\')inQ=!inQ;
+  else if(c==='>'&&!inQ){gt=i;break}
+ }
+ if(gt<=lt)return null;
+ return {lt,gt};
+}
+
 function splitTop2(v,sep=','){
  const o=[];let ang=0,par=0,q=0,s=0;
  for(let i=0;i<v.length;i++){const c=v[i];if(c==='"'&&v[i-1]!=='\\')q^=1;else if(!q){if(c==='<')ang++;else if(c==='>')ang--;else if(c==='(')par++;else if(c===')')par--;else if(c===sep&&ang===0&&par===0){o.push(v.slice(s,i).trim());s=i+1}}}
@@ -164,24 +331,118 @@ function parseParamList2(parts){
 function paramFields(params,allowed,dyn){
  const fields=[];for(const p of params){const known=allowed.includes(p.name)||allowed.includes('generic');fields.push({key:'param:'+p.name,name:p.name+(known?'':' [not RFC-known]'),value:p.value||'(flag)',ignored:dyn?.includes(p.name)||false,kind:'param',known})}return fields
 }
+
+/* ---------- URI parsing with percent-decoding and tel: ---------- */
 function parseUri2(uri){
- const s=uri.trim(),parts=splitSemi2(s),base=parts.shift()||'';const q=base.indexOf('?');let core=base,query='';if(q>=0){core=base.slice(0,q);query=base.slice(q+1)}
- const fs=[{key:'uri',name:'URI',value:core,kind:'uri'}];for(const p of parts){const m=p.match(/^([^=]+)(?:=(.*))?$/);fs.push({key:'uri-param:'+(m?m[1].trim().toLowerCase():p.toLowerCase()),name:'URI param '+(m?m[1].trim():'?'),value:m?(m[2]??'(flag)'):p,kind:'uri-param'})}if(query)fs.push({key:'uri-headers',name:'URI header part',value:'?'+query,kind:'uri-header'});return fs
+ const s=String(uri||'').trim();
+ const qpos=s.indexOf('?');
+ const beforeQ=qpos>=0?s.slice(0,qpos):s;
+ const query=qpos>=0?s.slice(qpos+1):'';
+ const sm=beforeQ.match(/^([A-Za-z][A-Za-z0-9+.-]*):/);
+ const scheme=sm?sm[1].toLowerCase():'';
+ let rest=sm?beforeQ.slice(sm[0].length):beforeQ;
+ const fs=[];
+ if(scheme)fs.push({key:'uri-scheme',name:'URI scheme',value:scheme,kind:'uri-scheme'});
+ if(scheme==='sip'||scheme==='sips'){
+   const at=rest.lastIndexOf('@');
+   let userinfo='';
+   if(at>=0){
+     userinfo=rest.slice(0,at);rest=rest.slice(at+1);
+     if(userinfo){
+       const c=userinfo.indexOf(':');
+       if(c>=0){
+         fs.push({key:'uri-user',name:'URI user',value:userinfo.slice(0,c),normValue:pctDecodeUnreserved(userinfo.slice(0,c)).toLowerCase(),kind:'uri-component'});
+         fs.push({key:'uri-password',name:'URI password',value:userinfo.slice(c+1),normValue:pctDecodeUnreserved(userinfo.slice(c+1)).toLowerCase(),kind:'uri-component'});
+       }else fs.push({key:'uri-user',name:'URI user',value:userinfo,normValue:pctDecodeUnreserved(userinfo).toLowerCase(),kind:'uri-component'});
+     }
+   }
+   const semi=rest.indexOf(';');
+   const authority=semi>=0?rest.slice(0,semi):rest;
+   const pstr=semi>=0?rest.slice(semi+1):'';
+   if(authority.startsWith('[')){
+     const rb=authority.indexOf(']');
+     if(rb>=0){
+       fs.push({key:'uri-host',name:'URI host',value:authority.slice(0,rb+1),normValue:pctDecodeUnreserved(authority.slice(1,rb)).toLowerCase(),kind:'uri-host'});
+       if(authority[rb+1]===':'&&authority.slice(rb+2))fs.push({key:'uri-port',name:'URI port',value:authority.slice(rb+2),kind:'uri-component'});
+     } else fs.push({key:'uri-host',name:'URI host',value:authority,normValue:pctDecodeUnreserved(authority).toLowerCase(),kind:'uri-host'});
+   }else{
+     const cm=authority.match(/^(.+):(\d+)$/);
+     if(cm){
+       fs.push({key:'uri-host',name:'URI host',value:cm[1],normValue:pctDecodeUnreserved(cm[1]).toLowerCase(),kind:'uri-host'});
+       fs.push({key:'uri-port',name:'URI port',value:cm[2],kind:'uri-component'});
+     }else fs.push({key:'uri-host',name:'URI host',value:authority,normValue:pctDecodeUnreserved(authority).toLowerCase(),kind:'uri-host'});
+   }
+   for(const p of splitSemi2(pstr)){
+     if(!p)continue;
+     const m=p.match(/^([^=]+)(?:=(.*))?$/);
+     const n=(m?m[1]:p).trim().toLowerCase();
+     fs.push({key:'uri-param:'+n,name:'URI param '+(m?m[1].trim():p.trim()),value:m?(m[2]??'(flag)'):'(flag)',kind:'uri-param'});
+   }
+ }else if(scheme==='tel'){
+   // tel: number and parameters; parameter order is not significant (RFC 3966 §3)
+   const parts=splitSemi2(rest);
+   const number=parts.shift()||'';
+   fs.push({key:'tel-number',name:'Telephone number',value:number,normValue:number.toLowerCase(),kind:'tel-number'});
+   for(const p of parts){
+     if(!p)continue;
+     const m=p.match(/^([^=]+)(?:=(.*))?$/);
+     if(!m)continue;
+     const n=m[1].trim().toLowerCase();
+     fs.push({key:'tel-param:'+n,name:'tel param '+m[1].trim(),value:(m[2]??'(flag)'),kind:'tel-param'});
+   }
+ }else{
+   fs.push({key:'uri-opaque',name:'URI',value:rest,kind:'uri-opaque'});
+ }
+ if(query){
+   for(const h of query.split('&')){
+     const m=h.match(/^([^=]+)(?:=(.*))?$/);
+     fs.push({key:'uri-header:'+((m?m[1]:h).trim().toLowerCase()),name:'URI header '+(m?m[1].trim():h),value:m?(m[2]??''):'',kind:'uri-header'});
+   }
+ }
+ return fs;
 }
+
 function parseNameAddr2(v,header){
- let s=v.trim(),display='',uri='',tail='';const lt=s.indexOf('<'),gt=s.lastIndexOf('>');
- if(lt>=0&&gt>lt){display=s.slice(0,lt).trim();uri=s.slice(lt+1,gt).trim();tail=s.slice(gt+1).trim()}else{const p=splitSemi2(s);uri=p.shift()||'';tail=p.join(';')}
- const fs=[];if(display)fs.push({key:'display',name:'Display name',value:display,kind:'display'});fs.push(...parseUri2(uri));const params=tail?paramFields(parseParamList2(splitSemi2(tail)),(SCHEMA[header]?.params||['generic']),SCHEMA[header]?.dynamic):[];fs.push(...params);return fs
+ let s=String(v||'').trim(),display='',uri='',tail='';
+ const angle=findAngle(s);
+ if(angle){
+  display=s.slice(0,angle.lt).trim();
+  uri=s.slice(angle.lt+1,angle.gt).trim();
+  tail=s.slice(angle.gt+1).trim();
+ }else{
+  const p=splitSemi2(s);uri=p.shift()||'';tail=p.join(';');
+ }
+ const fs=[];
+ if(display){
+  let dn=display;
+  if(dn.length>=2&&dn[0]==='"'&&dn[dn.length-1]==='"'&&!dn.slice(1,-1).includes('"')) dn=dn.slice(1,-1);
+  fs.push({key:'display',name:'Display name',value:display,normValue:dn.trim(),kind:'display'});
+ }
+ fs.push(...parseUri2(uri));
+ const params=tail?paramFields(parseParamList2(splitSemi2(tail)),(SCHEMA[header]?.params||['generic']),SCHEMA[header]?.dynamic):[];
+ fs.push(...params);
+ return fs;
 }
 function parseHeader2(k,v){
  const s=String(v??'').trim(), sc=SCHEMA[k]||{rfc:'Generic SIP header / extension',kind:'generic',params:['generic']};
  if(sc.kind==='via'){
-  const p=splitSemi2(s),base=(p.shift()||'').trim(),m=base.match(/^(\S+)\s+(.+)$/),fs=[];if(m){fs.push({key:'sent-protocol',name:'Sent protocol',value:m[1],kind:'base'});fs.push({key:'sent-by',name:'Sent-by',value:m[2],kind:'base'})}else fs.push({key:'value',name:'Value',value:base,kind:'base'});fs.push(...paramFields(parseParamList2(p),['ttl','maddr','received','branch','rport','generic'],['branch']));return fs
+  const p=splitSemi2(s),base=(p.shift()||'').trim(),m=base.match(/^(\S+)\s+(.+)$/),fs=[];
+  if(m){
+    fs.push({key:'sent-protocol',name:'Sent protocol',value:m[1],kind:'sent-protocol'});
+    const sb=m[2].trim();
+    const hm=sb.match(/^\[([^\]]+)\](?::(\d+))?$/) || sb.match(/^(.+?)(?::(\d+))?$/);
+    if(hm){
+      const host=hm[1]!==undefined?hm[1]:sb,port=hm[2];
+      fs.push({key:'sent-by-host',name:'Sent-by host',value:hm[0].startsWith('[')?'['+host+']':host,kind:'via-host'});
+      if(port!==undefined)fs.push({key:'sent-by-port',name:'Sent-by port',value:port,kind:'via-port'});
+    }else fs.push({key:'sent-by',name:'Sent-by',value:sb,kind:'via-host'});
+  }else fs.push({key:'value',name:'Value',value:base,kind:'base'});
+  fs.push(...paramFields(parseParamList2(p),['ttl','maddr','received','branch','rport','generic'],['branch']));return fs
  }
  if(sc.kind==='identity'){if(s.includes('<'))return parseNameAddr2(s,k);return parseUri2(s)} if(sc.kind==='nameaddr'){return parseNameAddr2(s,k)}
  if(sc.kind==='callid')return[{key:'call-id',name:'Call-ID',value:s,kind:'identifier',ignored:true}];
- if(sc.kind==='cseq'){const m=s.match(/^(\d+)\s+(\S+)$/);return m?[{key:'cseq-number',name:'CSeq number',value:m[1],kind:'number'},{key:'cseq-method',name:'CSeq method',value:m[2],kind:'token'}]:[{key:'value',name:'Value',value:s,kind:'base'}]}
- if(sc.kind==='rack'){const m=s.match(/^(\d+)\s+(\d+)\s+(\S+)$/);return m?[{key:'rack-rseq',name:'RAck RSeq',value:m[1],kind:'number'},{key:'rack-cseq',name:'RAck CSeq',value:m[2],kind:'number'},{key:'rack-method',name:'RAck method',value:m[3],kind:'token'}]:[{key:'value',name:'Value',value:s,kind:'base'}]}
+ if(sc.kind==='cseq'){const m=s.match(/^(\d+)\s+(\S+)$/);return m?[{key:'cseq-number',name:'CSeq number',value:m[1],kind:'number'},{key:'cseq-method',name:'CSeq method',value:m[2],kind:'method'}]:[{key:'value',name:'Value',value:s,kind:'base'}]}
+ if(sc.kind==='rack'){const m=s.match(/^(\d+)\s+(\d+)\s+(\S+)$/);return m?[{key:'rack-rseq',name:'RAck RSeq',value:m[1],kind:'number'},{key:'rack-cseq',name:'RAck CSeq',value:m[2],kind:'number'},{key:'rack-method',name:'RAck method',value:m[3],kind:'method'}]:[{key:'value',name:'Value',value:s,kind:'base'}]}
  if(sc.kind==='number')return[{key:'number',name:'Number',value:s,kind:'number'}];
  if(sc.kind==='token-list')return splitTop2(s).map((x,i)=>({key:'item:'+x.toLowerCase(),name:'Item '+(i+1),value:x,kind:'token'}));
  if(sc.kind==='generic-list')return splitTop2(s).flatMap((x,i)=>{const p=splitSemi2(x),base=p.shift()||'';return[{key:'item:'+i,name:'Item '+(i+1),value:base,kind:'token'},...paramFields(parseParamList2(p),sc.params)]});
@@ -192,30 +453,541 @@ function parseHeader2(k,v){
   fs.push(...paramFields(parseParamList2(p),sc.params,sc.dynamic));return fs
  }
  if(sc.kind==='mediatype'||sc.kind==='mediatype-list'||sc.kind==='token-param-list'||sc.kind==='security-list'){
-  const vals=splitTop2(s),fs=[];vals.forEach((x,i)=>{const p=splitSemi2(x),base=p.shift()||'';fs.push({key:'item-base:'+i,name:sc.kind==='mediatype'?'Media type':'Item '+(i+1),value:base,kind:'base'});fs.push(...paramFields(parseParamList2(p),sc.params))});return fs
+  const vals=splitTop2(s),fs=[];vals.forEach((x,i)=>{const p=splitSemi2(x),base=p.shift()||'';const kk=sc.kind==='mediatype'?'mediatype':'base';fs.push({key:'item-base:'+i,name:sc.kind==='mediatype'?'Media type':'Item '+(i+1),value:base,kind:kk});fs.push(...paramFields(parseParamList2(p),sc.params))});return fs
  }
  if(sc.kind==='generic'){
   const p=splitSemi2(s),base=p.shift()||'',fs=[{key:'base',name:'Value',value:base,kind:'base'}];fs.push(...paramFields(parseParamList2(p),['generic']));return fs
  }
  return[{key:'value',name:'Value',value:s,kind:'base'}]
 }
+
+/* ---------- SDP ---------- */
+const SDP_PT_ATTRS=new Set(['rtpmap','fmtp','rtcp-fb','rtcp-xr','sctpmap','format-parameters','rtcp-fb-trr-int']);
+const SDP_SET_PARAMS=new Set(['mode-set']);
+const STATIC_PT={'0':'PCMU/8000','3':'GSM/8000','4':'G723/8000','5':'DVI4/8000','6':'DVI4/16000','7':'LPC/8000','8':'PCMA/8000','9':'G722/8000','10':'L16/44100','11':'L16/44100','12':'QCELP/8000','13':'CN/8000','14':'MPA/90000','15':'G728/8000','16':'DVI4/11025','17':'DVI4/22050','18':'G729/8000'};
+
+function buildPtMap(lines){
+ const m=new Map();
+ for(const line of lines||[]){
+  const s=String(line||'').trim();
+  if(!s.startsWith('a=rtpmap:')) continue;
+  const m2=s.slice(2).match(/^rtpmap:(\d+)\s+(\S+)/i);
+  if(m2) m.set(m2[1],m2[2].toLowerCase());
+ }
+ return m;
+}
+
+function parseSDPLine2(line,o){
+ o=o||{};
+ const s=String(line||'').trim();
+ if(s.length<2||s[1]!=='=') return [{key:'line',name:'SDP line',value:s,kind:'text'}];
+ const t=s[0],v=s.slice(2).trim();
+ if(t==='v') return [{key:'sdp-version',name:'Version',value:v,kind:'number'}];
+ if(t==='o'){
+  const a=v.split(/\s+/);
+  if(a.length>=6) return [
+   {key:'o-username',name:'Username',value:a[0],kind:'token'},
+   {key:'o-sess-id',name:'Session ID',value:a[1],kind:'identifier',ignored:true},
+   {key:'o-sess-version',name:'Session version',value:a[2],kind:'identifier',ignored:true},
+   {key:'o-nettype',name:'Network type',value:a[3],kind:'token'},
+   {key:'o-addrtype',name:'Address type',value:a[4],kind:'token'},
+   {key:'o-unicast-address',name:'Unicast address',value:a.slice(5).join(' '),kind:'sdp-address'}
+  ];
+ }
+ if(t==='s') return [{key:'s',name:'Session name',value:v,kind:'text'}];
+ if(t==='i') return [{key:'i',name:'Information',value:v,kind:'text'}];
+ if(t==='u') return [{key:'u',name:'URI',value:v,kind:'text'}];
+ if(t==='e') return [{key:'e',name:'Email',value:v,kind:'text'}];
+ if(t==='p') return [{key:'p',name:'Phone',value:v,kind:'text'}];
+ if(t==='c'){
+  const a=v.split(/\s+/);
+  if(a.length>=3) return [
+   {key:'c-nettype',name:'Network type',value:a[0],kind:'token'},
+   {key:'c-addrtype',name:'Address type',value:a[1],kind:'token'},
+   {key:'c-connection-address',name:'Connection address',value:a.slice(2).join(' '),kind:'sdp-address'}
+  ];
+ }
+ if(t==='b'){
+  const m=v.match(/^([^:]+):(.*)$/);
+  if(m) return [{key:'b:'+m[1].toUpperCase(),name:'Bandwidth '+m[1],value:m[2],kind:'number'}];
+  return [{key:'b',name:'Bandwidth',value:v,kind:'text'}];
+ }
+ if(t==='t'){
+  const a=v.split(/\s+/);
+  if(a.length>=2) return [
+   {key:'t-start',name:'Start time',value:a[0],kind:'number'},
+   {key:'t-stop',name:'Stop time',value:a[1],kind:'number'}
+  ];
+  return [{key:'t',name:'Timing',value:v,kind:'text'}];
+ }
+ if(t==='r') return [{key:'r',name:'Repeat',value:v,kind:'text'}];
+ if(t==='z') return [{key:'z',name:'Time zone',value:v,kind:'text'}];
+ if(t==='k') return [{key:'k',name:'Encryption key',value:v,kind:'text'}];
+ if(t==='m'){
+  const a=v.split(/\s+/);
+  if(a.length>=4){
+   const out=[{key:'m-media',name:'Media',value:a[0],kind:'token'}];
+   const pm=a[1].match(/^(\d+)(?:\/(\d+))?$/);
+   if(pm){
+    out.push({key:'m-port',name:'Port',value:pm[1],kind:'number'});
+    if(pm[2]!==undefined) out.push({key:'m-port-count',name:'Port count',value:pm[2],kind:'number'});
+   } else out.push({key:'m-port',name:'Port',value:a[1],kind:'number'});
+   out.push({key:'m-proto',name:'Protocol',value:a[2],kind:'token'});
+   for(let i=3;i<a.length;i++){
+    const pt=a[i];
+    const ident=(o.ptMap&&o.ptMap.get(pt))||pt;
+    out.push({key:'m-fmt:'+String(i-3),name:'Format '+(i-2),value:pt,codecId:ident,kind:'format'});
+   }
+   return out;
+  }
+ }
+ if(t==='a'){
+  const mm=v.match(/^([^:\s]+)(?::\s*([^\s]+))?/);
+  if(mm){
+   const n=mm[1].toLowerCase();
+   if((n==='rtpmap'||n==='fmtp')&&mm[2]!==undefined){
+    const pt=mm[2];
+    const ident=(o.ptMap&&o.ptMap.get(pt))||pt;
+    const afterColon=v.slice(v.indexOf(':')+1).trim();
+    const si=afterColon.search(/\s/);
+    const rest=si>=0?afterColon.slice(si+1).trim():'';
+    if(n==='rtpmap'){
+     return [{key:'a:rtpmap:'+ident.toLowerCase(),name:'rtpmap',value:rest,normValue:rest.toLowerCase(),kind:'rtpmap',pt}];
+    }
+    // fmtp
+    const parts=rest?rest.split(';').map(x=>x.trim()).filter(Boolean):[];
+    const normParts=parts.map(p=>{
+     const m2=p.match(/^([^=]+)=(.*)$/);
+     if(!m2) return p.toLowerCase();
+     const name=m2[1].trim().toLowerCase();
+     let val=m2[2].trim();
+     if(SDP_SET_PARAMS.has(name)) val=val.split(',').map(x=>x.trim()).sort().join(',');
+     return name+'='+val.toLowerCase();
+    });
+    normParts.sort();
+    return [{key:'a:fmtp:'+ident.toLowerCase(),name:'fmtp',value:rest,normValue:normParts.join(';'),kind:'fmtp',pt}];
+   }
+   let key='a:'+n;
+   if(SDP_PT_ATTRS.has(n)&&mm[2]!==undefined) key+=':'+mm[2];
+   return [{key,name:'Attribute '+n,value:v,kind:'attribute'}];
+  }
+  return [{key:'a:'+v.toLowerCase(),name:'Attribute',value:v,kind:'attribute'}];
+ }
+ return [{key:'line',name:'SDP '+t+' line',value:v,kind:'text'}];
+}
+function sdpAlignKey(line,ptMap){
+ const s=String(line||'').trim();
+ if(s.length<2||s[1]!=='=') return s;
+ const t=s[0],v=s.slice(2).trim();
+ if(t==='a'){
+  const mm=v.match(/^([^:\s]+)(?::\s*([^\s]+))?/);
+  if(mm){
+   const n=mm[1].toLowerCase();
+   if(SDP_PT_ATTRS.has(n)&&mm[2]!==undefined){
+    const ident=(ptMap&&ptMap.get(mm[2]))||mm[2];
+    return 'a:'+n+':'+String(ident).toLowerCase();
+   }
+   return 'a:'+n;
+  }
+  return 'a:'+v.toLowerCase();
+ }
+ if(t==='b'){const mm=v.match(/^([^:]+):/);return 'b:'+(mm?mm[1].toUpperCase():'');}
+ if(t==='m') return 'm:'+v.split(/\s+/)[0];
+ return t;
+}
+function alignSDPLines2(L,R,o,ptMapL,ptMapR){
+ const rIdx=new Map();
+ R.forEach((line,i)=>{const k=sdpAlignKey(line,ptMapR);const a=rIdx.get(k)||[];a.push(i);rIdx.set(k,a)});
+ const used=new Set(),out=[];
+ for(const l of L){
+  const k=sdpAlignKey(l,ptMapL);
+  const a=rIdx.get(k);
+  let j=-1;
+  if(a&&a.length){j=a.shift();used.add(j)}
+  if(j>=0) out.push({l,r:R[j]});
+  else out.push({l,r:undefined});
+ }
+ for(let i=0;i<R.length;i++) if(!used.has(i)) out.push({l:undefined,r:R[i]});
+ return out;
+}
+function compareSDPLine2(a,b,o){
+ const A=parseSDPLine2(a,{...o,ptMap:o.ptMapL}),B=parseSDPLine2(b,{...o,ptMap:o.ptMapR});
+ const am=fieldMap(A),bm=fieldMap(B),keys=[];
+ for(const x of am.keys())if(!keys.includes(x))keys.push(x);for(const x of bm.keys())if(!keys.includes(x))keys.push(x);
+ const rows=[];
+ for(const k of keys){
+  const x=am.get(k),y=bm.get(k);let st;
+  if(!x)st='R';else if(!y)st='L';
+  else if(o.mask&&(x.ignored||y.ignored))st='ignored';
+  else st=fieldNorm(x,x.value)===fieldNorm(y,y.value)?'same':'chg';
+  rows.push({key:k,name:(x||y).name,l:x?.value,r:y?.value,st,ignored:st==='ignored',kind:(x||y).kind});
+ }
+ return {rows,changed:rows.filter(f=>['chg','L','R'].includes(f.st)).length,ignored:rows.filter(f=>f.st==='ignored').length};
+}
+function highlightSDP2(raw,sec,side){
+ const keys=changedKeys(sec),s=String(raw||'').trim();
+ if(s.length<2||s[1]!=='=') return $q(raw);
+ const t=s[0],v=s.slice(2).trim(),lead=$q(s.slice(0,2)+' ');
+ if(t==='o'){
+  const a=v.split(/\s+/);
+  if(a.length>=6){
+   const names=['o-username','o-sess-id','o-sess-version','o-nettype','o-addrtype','o-unicast-address'];
+   return lead+a.map((x,i)=>keys.has(names[i])?mark2(x,true):$q(x)).join(' ');
+  }
+ }
+ if(t==='c'){
+  const a=v.split(/\s+/);
+  if(a.length>=3){
+   return lead+(keys.has('c-nettype')?mark2(a[0],true):$q(a[0]))+' '+
+          (keys.has('c-addrtype')?mark2(a[1],true):$q(a[1]))+' '+
+          (keys.has('c-connection-address')?mark2(a.slice(2).join(' '),true):$q(a.slice(2).join(' ')));
+  }
+ }
+ if(t==='m'){
+  const a=v.split(/\s+/);
+  if(a.length>=4){
+   let out=lead+(keys.has('m-media')?mark2(a[0],true):$q(a[0]))+' ';
+   const pm=a[1].match(/^(\d+)(?:\/(\d+))?$/);
+   if(pm){
+    out+=keys.has('m-port')?mark2(pm[1],true):$q(pm[1]);
+    if(pm[2]!==undefined) out+='/'+(keys.has('m-port-count')?mark2(pm[2],true):$q(pm[2]));
+   } else out+=keys.has('m-port')?mark2(a[1],true):$q(a[1]);
+   out+=' '+(keys.has('m-proto')?mark2(a[2],true):$q(a[2]));
+   for(let i=3;i<a.length;i++) out+=' '+(keys.has('m-fmt:'+String(i-3))?mark2(a[i],true):$q(a[i]));
+   return out;
+  }
+ }
+ if(t==='b'){
+  const m=v.match(/^([^:]+):(.*)$/);
+  if(m){
+   const k='b:'+m[1].toUpperCase();
+   return lead+$q(m[1]+':')+(keys.has(k)?mark2(m[2],true):$q(m[2]));
+  }
+ }
+ if(t==='a'){
+  const mm=v.match(/^([^:\s]+)(?::\s*([^\s]+))?/);
+  if(mm){
+   const n=mm[1].toLowerCase();
+   let key='a:'+n;
+   if(SDP_PT_ATTRS.has(n)&&mm[2]!==undefined){
+    const ptMap=sec.ptMap&&sec.ptMap[side];
+    const ident=(ptMap&&ptMap.get(mm[2]))||mm[2];
+    key+=':'+String(ident).toLowerCase();
+   }
+   if(keys.has(key)) return lead+mark2(v,true);
+  }
+  return $q(raw);
+ }
+ const fs=parseSDPLine2(s,{});
+ if(fs.length===1&&keys.has(fs[0].key)) return lead+mark2(v,true);
+ return $q(raw);
+}
+
+/* ---------- header highlighting ---------- */
+const NAMEADDR_HDRS=new Set(['from','to','contact','route','record-route','path','service-route','history-info','reply-to','refer-to','referred-by','p-asserted-identity','p-preferred-identity','p-associated-uri','p-called-party-id']);
+function highlightUri2(uri,keys){
+ const s=String(uri||''),qpos=s.indexOf('?'),before=qpos>=0?s.slice(0,qpos):s,query=qpos>=0?s.slice(qpos+1):'';
+ const sm=before.match(/^([A-Za-z][A-Za-z0-9+.-]*:)/); if(!sm)return $q(uri);
+ let rest=before.slice(sm[0].length),out=$q(sm[1]);
+ const at=rest.lastIndexOf('@');
+ if(at>=0){const userinfo=rest.slice(0,at);rest=rest.slice(at+1);const uiFocus=keys.has('uri-user')||keys.has('uri-password');out+=uiFocus?mark2(userinfo,true):$q(userinfo);out+='@';}
+ const semi=rest.indexOf(';');const authority=semi>=0?rest.slice(0,semi):rest,pstr=semi>=0?rest.slice(semi+1):'';
+ if(authority.startsWith('[')){
+  const rb=authority.indexOf(']');const hostToken=rb>=0?authority.slice(0,rb+1):authority;const hostFocus=keys.has('uri-host');out+=hostFocus?mark2(hostToken,true):$q(hostToken);if(rb>=0&&authority[rb+1]===':'&&authority.slice(rb+2)){out+=':';const pv=authority.slice(rb+2);out+=keys.has('uri-port')?mark2(pv,true):$q(pv)}
+ }else{
+  const cm=authority.match(/^(.+):(\d+)$/);if(cm){out+=keys.has('uri-host')?mark2(cm[1],true):$q(cm[1]);out+=':';out+=keys.has('uri-port')?mark2(cm[2],true):$q(cm[2]);}else out+=keys.has('uri-host')?mark2(authority,true):$q(authority)
+ }
+ for(const p of pstr?splitSemi2(pstr):[]){const m=p.match(/^([^=]+)(?:=(.*))?$/),n=(m?m[1]:p).trim(),key='uri-param:'+n.toLowerCase();out+=';'+$q(n);if(m&&m[2]!==undefined){out+='=';out+=keys.has(key)?mark2(m[2],true):$q(m[2])}}
+ if(qpos>=0){out+='?';const parts=query.split('&');parts.forEach((h,idx)=>{const m=h.match(/^([^=]+)(?:=(.*))?$/),n=(m?m[1]:h).trim(),key='uri-header:'+n.toLowerCase();out+=$q(n);if(m&&m[2]!==undefined){out+='=';out+=keys.has(key)?mark2(m[2],true):$q(m[2])}if(idx<parts.length-1)out+='&'});}
+ return out;
+}
+function highlightVia2(raw,keys){
+ const s=String(raw||'');
+ const semi=s.indexOf(';');
+ const basePart=semi<0?s:s.slice(0,semi);
+ const tailPart=semi<0?'':s.slice(semi);
+ let baseOut=$q(basePart);
+ const bm=basePart.match(/^(\s*)(\S+)(\s+)(.+?)(\s*)$/s);
+ if(bm){
+  const hostport=bm[4];
+  let hpOut=$q(hostport);
+  const hm=hostport.match(/^(\[([^\]]+)\]|(.+?))(?::(\d+))?$/);
+  if(hm){
+   const hostToken=hm[1];
+   const port=hm[4];
+   const hostFocus=keys.has('sent-by-host'),portFocus=keys.has('sent-by-port');
+   let hostOut=hostFocus?mark2(hostToken,true):$q(hostToken);
+   if(port!==undefined) hpOut=hostOut+':'+(portFocus?mark2(port,true):$q(port));
+   else hpOut=hostOut;
+  }
+  baseOut=$q(bm[1])+(keys.has('sent-protocol')?mark2(bm[2],true):$q(bm[2]))+$q(bm[3])+hpOut+$q(bm[5]);
+ }
+ const paramNames=[...keys].filter(x=>x.startsWith('param:')).map(x=>x.slice(6));
+ const spans=paramValueSpans(tailPart,paramNames);
+ const tailOut=spans.length?applySpans(tailPart,spans):$q(tailPart);
+ return baseOut+tailOut;
+}
+function highlightHeaderRaw2(sec,side){
+ const raw=sec.raw?.[side]; if(raw===undefined||raw===null)return '<span class="empty">—</span>';
+ const keys=changedKeys(sec); const k=sec.k;
+ if(k==='via')return highlightVia2(raw,keys);
+ if(k==='sdp')return highlightSDP2(raw,sec,side);
+ if(k==='start'){
+  const m=String(raw).match(/^(\S+)(\s+)(\S+)(\s+SIP\/2\.0)$/);
+  if(m){
+   const mo=keys.has('start-method')?mark2(m[1],true):$q(m[1]);
+   return mo+$q(m[2])+highlightUri2(m[3],keys)+$q(m[4]);
+  }
+  return $q(raw);
+ }
+ if(k&&k.startsWith('order:')) return $q(raw);
+ if(keys.size===0) return $q(raw);
+ const paramNames=[...keys].filter(x=>x.startsWith('param:')).map(x=>x.slice(6));
+ if(NAMEADDR_HDRS.has(k)){
+  const angle=findAngle(raw);
+  if(angle){
+   const disp=raw.slice(0,angle.lt),uri=raw.slice(angle.lt+1,angle.gt),tail=raw.slice(angle.gt+1);
+   let out=(keys.has('display')&&disp)?mark2(disp,true):$q(disp);
+   out+='&lt;'+highlightUri2(uri,keys)+'&gt;';
+   const tailSpans=paramValueSpans(tail,paramNames);
+   out+=tailSpans.length?applySpans(tail,tailSpans):$q(tail);
+   return out;
+  }
+  const semi=raw.indexOf(';');
+  const uriOnly=semi<0?raw:raw.slice(0,semi);
+  const tail=semi<0?'':raw.slice(semi);
+  let out=highlightUri2(uriOnly,keys);
+  const tailSpans=paramValueSpans(tail,paramNames);
+  out+=tailSpans.length?applySpans(tail,tailSpans):$q(tail);
+  return out;
+ }
+ const spans=[];
+ if(keys.has('base')||keys.has('value')){
+  const fs=raw.indexOf(';');
+  spans.push({start:0,end:fs<0?raw.length:fs});
+ }
+ spans.push(...paramValueSpans(raw,paramNames));
+ if(spans.length) return applySpans(raw,spans);
+ return $q(raw);
+}
+
+function renderSection3(sec,o){
+ const hasInfo=sec.fields.some(f=>f.informational&&f.st!=='same');
+ if(o.focus&&sec.changed===0&&!hasInfo)return '';
+ const n=sec.changed,ignored=sec.fields.filter(f=>f.st==='ignored').length;
+ const badge=n?'<span class="inline-badge diff">'+n+' change'+(n>1?'s':'')+'</span>':ignored?'<span class="inline-badge same">RFC-generated / ignored</span>':hasInfo?'<span class="inline-badge info">informational</span>':'<span class="inline-badge same">same</span>';
+ const name='<div class="inline-diff-name">'+E(sec.name)+badge+'<span class="inline-rfc">'+E(sec.rfc)+'</span></div>';
+ const l=highlightHeaderRaw2(sec,0),r=highlightHeaderRaw2(sec,1);
+ return '<div class="inline-diff-row">'+name+'<div class="inline-side left">'+l+'</div><div class="inline-side right">'+r+'</div></div>';
+}
+
 function schemaText(k){const s=SCHEMA[k];if(!s)return'Generic SIP extension';return s.rfc+' · allowed parameters: '+s.params.join(', ')}
 function fieldMap(fields){const m=new Map();for(const f of fields){let k=f.key;if(m.has(k)){let n=2;while(m.has(k+'#'+n))n++;k=k+'#'+n}m.set(k,{...f,key:k})}return m}
 function valNorm(v){return String(v??'').replace(/[ \t]+/g,' ').trim()}
+
+const LOWER_KINDS=new Set(['uri-scheme','token','sent-protocol','mediatype','via-host','event-type','option-tag']);
+function fieldNorm(f,v){
+ if(f){
+  if(f.codecId!==undefined) return String(f.codecId).toLowerCase();
+  if(f.normValue!==undefined) return f.normValue;
+ }
+ const kind=f?.kind, key=f?.key||'';
+ const x=valNorm(v);
+ if(LOWER_KINDS.has(kind)) return x.toLowerCase();
+ if(kind==='uri-host') return pctDecodeUnreserved(x).toLowerCase();
+ if(kind==='param'){
+  const pn=key.startsWith('param:')?key.slice(6):'';
+  return normParamValue(pn,x);
+ }
+ if(kind==='uri-param'||kind==='tel-param'){
+  const pn=key.startsWith('uri-param:')?key.slice(10):(key.startsWith('tel-param:')?key.slice(10):'');
+  return normParamValue(pn,x);
+ }
+ if(kind==='display'){
+  if(x.length>=2&&x[0]==='"'&&x[x.length-1]==='"'&&!x.slice(1,-1).includes('"')) return x.slice(1,-1);
+  return x;
+ }
+ if(kind==='sdp-address') return canonIPv6(x);
+ if(kind==='method') return x; // case-sensitive per RFC 3261 §7.1
+ if(kind==='fmtp'||kind==='rtpmap') return x.toLowerCase();
+ return x;
+}
+function uriFieldsFromRequest(start){
+ const m=start.match(/^(\S+)\s+(\S+)\s+SIP\/2\.0$/);
+ if(!m)return null;
+ return {method:m[1],uri:m[2],version:'SIP/2.0'};
+}
 function normalizedFields(fields,ignoreOrder){const m=fieldMap(fields);const arr=[...m.values()];if(ignoreOrder)arr.sort((a,b)=>a.key.localeCompare(b.key));return arr}
 function compareStructured(k,a,b,o){
- const A=normalizedFields(parseHeader2(k,a),!ORDERED2.has(k)),B=normalizedFields(parseHeader2(k,b),!ORDERED2.has(k));const am=fieldMap(A),bm=fieldMap(B),keys=[];for(const x of am.keys())if(!keys.includes(x))keys.push(x);for(const x of bm.keys())if(!keys.includes(x))keys.push(x);
- const rows=[];for(const key of keys){const x=am.get(key),y=bm.get(key),ignored=(x?.ignored||y?.ignored||false);const xv=x?.value,yv=y?.value;const dynIgnored=o.mask&&(x?.ignored||y?.ignored);let st;if(x===undefined)st='R';else if(y===undefined)st='L';else if(dynIgnored)st='ignored';else if(valNorm(xv)===valNorm(yv))st='same';else st='chg';rows.push({key,name:(x||y).name,l:xv,r:yv,st,ignored,kind:(x||y).kind})}
- return{rows,changed:rows.filter(x=>['chg','L','R'].includes(x.st)).length,ignored:rows.filter(x=>x.st==='ignored').length}
+ const A=normalizedFields(parseHeader2(k,a),!ORDERED2.has(k)),B=normalizedFields(parseHeader2(k,b),!ORDERED2.has(k));
+ const am=fieldMap(A),bm=fieldMap(B),keys=[];
+ for(const x of am.keys())if(!keys.includes(x))keys.push(x);for(const x of bm.keys())if(!keys.includes(x))keys.push(x);
+ const rows=[];
+ for(const key of keys){
+  const x=am.get(key),y=bm.get(key),dynIgnored=o.mask&&(x?.ignored||y?.ignored);let st;
+  if(x===undefined)st='R';else if(y===undefined)st='L';else if(dynIgnored)st='ignored';else if(fieldNorm(x,x.value)===fieldNorm(y,y.value))st='same';else st='chg';
+  rows.push({key,name:(x||y).name,l:x?.value,r:y?.value,st,ignored:!!dynIgnored,kind:(x||y).kind});
+ }
+ return{rows,changed:rows.filter(x=>['chg','L','R'].includes(x.st)).length,ignored:rows.filter(x=>x.st==='ignored').length};
 }
+
 function signature2(k,v,o){const fs=parseHeader2(k,v);return fs.filter(x=>!(o.mask&&x.ignored)).map(x=>x.key+'='+valNorm(x.value)).join('|')}
 function valueSimilarity2(k,a,b,o){const A=parseHeader2(k,a).filter(x=>!(o.mask&&x.ignored)).map(x=>x.key),B=parseHeader2(k,b).filter(x=>!(o.mask&&x.ignored)).map(x=>x.key),bs=new Set(B);let hit=A.filter(x=>bs.has(x)).length;return hit/Math.max(A.length,B.length,1)}
-function alignValues2(L,R,k,o){if(L.length===1&&R.length===1)return[{l:L[0],r:R[0]}];const out=[],used=new Set();for(const a of L){const sig=signature2(k,a,o);let j=R.findIndex((b,n)=>!used.has(n)&&signature2(k,b,o)===sig);if(j<0&&!ORDERED2.has(k)){let best=-1,score=.35;for(let n=0;n<R.length;n++)if(!used.has(n)){const z=valueSimilarity2(k,a,R[n],o);if(z>score){score=z;best=n}}j=best}if(j>=0){used.add(j);out.push({l:a,r:R[j]})}else out.push({l:a,r:undefined})}for(let n=0;n<R.length;n++)if(!used.has(n))out.push({l:undefined,r:R[n]});return out}
+function alignValues2(L,R,k,o){
+ if(L.length===1&&R.length===1)return[{l:L[0],r:R[0],li:0,ri:0}];
+ const out=[],used=new Set();
+ for(let li=0;li<L.length;li++){
+  const a=L[li];
+  const sig=signature2(k,a,o);
+  let j=R.findIndex((b,n)=>!used.has(n)&&signature2(k,b,o)===sig);
+  if(j<0&&!ORDERED2.has(k)){let best=-1,score=.35;for(let n=0;n<R.length;n++)if(!used.has(n)){const z=valueSimilarity2(k,a,R[n],o);if(z>score){score=z;best=n}}j=best}
+  if(j>=0){used.add(j);out.push({l:a,r:R[j],li,ri:j})}
+  else out.push({l:a,r:undefined,li,ri:-1});
+ }
+ for(let n=0;n<R.length;n++)if(!used.has(n))out.push({l:undefined,r:R[n],li:-1,ri:n});
+ return out;
+}
+function orderingChanged(pairs){
+ let lastRi=-1;
+ for(const p of pairs){
+  if(p.li===-1||p.ri===-1) continue;
+  if(p.ri<lastRi) return true;
+  lastRi=p.ri;
+ }
+ return false;
+}
 function headerGroups2(m){const g=new Map();for(const h of m.hs){const e=g.get(h.k)||g.set(h.k,{n:h.n,v:[]}).get(h.k);e.v.push(...(LIST2.has(h.k)?splitTop2(h.v):[h.v]))}return g}
 function diffStart(a,b){return valNorm(a)===valNorm(b)?'same':'chg'}
-function compareMessage2(a,b,o){const out=[];out.push({name:'Start-Line',k:'start',rfc:'RFC 3261 §7',headerRaw:[a.start,b.start],fields:[{name:'Start line',l:a.start,r:b.start,st:diffStart(a.start,b.start)}],changed:diffStart(a.start,b.start)==='chg'?1:0});const A=headerGroups2(a),B=headerGroups2(b);for(const k of new Set([...A.keys(),...B.keys()])){const x=A.get(k),y=B.get(k),pairs=alignValues2(x?x.v:[],y?y.v:[],k,o);for(let i=0;i<pairs.length;i++){const p=pairs[i],c=(p.l!==undefined&&p.r!==undefined)?compareStructured(k,p.l,p.r,o):{rows:[{key:'value',name:'Complete header value',l:p.l,r:p.r,st:p.l===undefined?'R':'L'}],changed:1,ignored:0};if(o.ign.has(k)){for(const f of c.rows){if(f.st!=='L'&&f.st!=='R')f.st='ignored';}c.changed=0;c.userIgnored=true}out.push({name:(x||y).n+(pairs.length>1?' ['+(i+1)+']':''),k,rfc:schemaText(k)+(c.userIgnored?' · USER IGNORED':'') ,raw:[p.l,p.r],fields:c.rows,changed:c.changed,ignored:c.ignored,userIgnored:c.userIgnored})}}
- const sa=secs(a.body),sb=secs(b.body);for(const k of new Set([...sa.keys(),...sb.keys()])){const L=sa.get(k)||[],R=sb.get(k)||[],pairs=alignValues2(L,R,'generic',o);for(let i=0;i<pairs.length;i++){const p=pairs[i],c=p.l!==undefined&&p.r!==undefined?compareStructured('generic',p.l,p.r,o):{rows:[{key:'line',name:'SDP line',l:p.l,r:p.r,st:p.l===undefined?'R':'L'}],changed:1,ignored:0};out.push({name:k==='body'?'Body':'SDP '+k,k:'generic',rfc:'SDP / RFC 4566',raw:[p.l,p.r],fields:c.rows,changed:c.changed,ignored:c.ignored})}}
- return out}
+
+/* ---------- SDP sectioning with implicit defaults ---------- */
+function secs(t){
+ const m=new Map(),count={};
+ const txt=String(t||'').replace(/\r\n/g,'\n');
+ const looksSDP=/(?:^|\n)v=0(?:\r?\n|$)/.test(txt) || /(?:^|\n)m=/.test(txt) || /(?:^|\n)o=/.test(txt);
+ let cur=looksSDP?'session':'body';
+ for(const line of txt.split('\n').map(x=>x.trim()).filter(Boolean)){
+  if(cur!=='body'&&line.startsWith('m=')){
+   const k=line.slice(2).split(/\s+/)[0];
+   count[k]=(count[k]||0)+1;
+   cur='m='+k+(count[k]>1?'#'+count[k]:'');
+  }
+  const arr=m.get(cur)||m.set(cur,[]).get(cur);
+  arr.push(line);
+ }
+ if(looksSDP){
+  for(const [key,arr] of m){
+   if(!key.startsWith('m=')) continue;
+   const hasDir=arr.some(l=>/^a=(sendrecv|sendonly|recvonly|inactive)\s*$/i.test(l));
+   if(!hasDir) arr.push('a=sendrecv');
+   const rtpmapPts=new Set();
+   for(const l of arr){const m2=l.match(/^a=rtpmap:(\d+)\s+/i);if(m2)rtpmapPts.add(m2[1])}
+   const mLine=arr.find(l=>/^m=/.test(l));
+   if(mLine){
+    const fmts=mLine.slice(2).split(/\s+/).slice(3);
+    for(const pt of fmts){
+     if(STATIC_PT[pt]&&!rtpmapPts.has(pt)) arr.push('a=rtpmap:'+pt+' '+STATIC_PT[pt]);
+    }
+   }
+  }
+ }
+ return m;
+}
+function messageSig2(m){
+ const rs=m.start.match(/^SIP\/2\.0\s+(\d{3})/);
+ const method=(m.cseqMethod||'').toUpperCase();
+ const ct=((m.hs.find(h=>h.k==='content-type')||{v:''}).v||'').toLowerCase();
+ if(rs){
+  const rseq=!!((m.hs.find(h=>h.k==='rseq')||{}).v||'');
+  const to=((m.hs.find(h=>h.k==='to')||{}).v||'');
+  return {kind:'R',status:rs[1],method,rseq,ct,tag:/\btag\s*=/.test(to)};
+ }
+ const q=m.start.match(/^([A-Z]+)\s+\S+\s+SIP\/2\.0$/);
+ return {kind:'Q',method:q?q[1].toUpperCase():'',status:'',rseq:false,ct,tag:/\btag\s*=/.test(((m.hs.find(h=>h.k==='to')||{}).v||''))};
+}
+function messageScore2(a,b){
+ const A=messageSig2(a),B=messageSig2(b);
+ if(A.kind!==B.kind)return -99;
+ let s=1;
+ if(A.kind==='Q') s += A.method===B.method ? 8 : -8;
+ else {
+  s += A.status===B.status ? 5 : 0;
+  s += (A.method&&B.method) ? (A.method===B.method ? 6 : -4) : 0;
+  s += A.rseq===B.rseq ? 1 : 0;
+ }
+ s += A.ct===B.ct ? 1 : 0;
+ return s;
+}
+function alignMessages(A,B){
+ const n=A.length,m=B.length;
+ const d=Array.from({length:n+1},()=>new Int32Array(m+1));
+ for(let i=n-1;i>=0;i--){
+  for(let j=m-1;j>=0;j--){
+   const score=messageScore2(A[i],B[j]);
+   const pair=score>=5?score+d[i+1][j+1]:-1000000;
+   const del=d[i+1][j]-3,ins=d[i][j+1]-3;
+   d[i][j]=Math.max(pair,del,ins);
+  }
+ }
+ const out=[];let i=0,j=0;
+ while(i<n&&j<m){
+  const score=messageScore2(A[i],B[j]);
+  const pair=score>=5?score+d[i+1][j+1]:-1000000;
+  if(pair>=d[i+1][j]-3 && pair>=d[i][j+1]-3){out.push([A[i++],B[j++]]);}
+  else if(d[i+1][j]>=d[i][j+1])out.push([A[i++],null]);
+  else out.push([null,B[j++]]);
+ }
+ while(i<n)out.push([A[i++],null]);
+ while(j<m)out.push([null,B[j++]]);
+ return out;
+}
+function compareStartLine(a,b,o){
+ const A=uriFieldsFromRequest(a.start),B=uriFieldsFromRequest(b.start);
+ if(A&&B){
+  const rows=[
+   {key:'start-method',name:'Method',l:A.method,r:B.method,st:A.method===B.method?'same':'chg',kind:'method'}
+  ];
+  const uriL=parseUri2(A.uri),uriR=parseUri2(B.uri),um=fieldMap(uriL),ur=fieldMap(uriR),keys=[];
+  for(const x of um.keys())if(!keys.includes(x))keys.push(x);for(const x of ur.keys())if(!keys.includes(x))keys.push(x);
+  for(const k of keys){const x=um.get(k),y=ur.get(k);rows.push({key:k,name:x?.name||y?.name,l:x?.value,r:y?.value,st:x&&y?(fieldNorm(x,x.value)===fieldNorm(y,y.value)?'same':'chg'):(x?'L':'R'),kind:x?.kind||y?.kind});}
+  rows.push({key:'sip-version',name:'SIP version',l:A.version,r:B.version,st:A.version===B.version?'same':'chg',kind:'token'});
+  return {name:'Request-Line',k:'start',rfc:'RFC 3261 §25.1 — Request-URI / SIP-URI',raw:[a.start,b.start],fields:rows,changed:rows.filter(x=>!x.informational&&['chg','L','R'].includes(x.st)).length,ignored:0};
+ }
+ const ra=a.start.match(/^SIP\/2\.0\s+(\d{3})(?:\s+(.*))?$/),rb=b.start.match(/^SIP\/2\.0\s+(\d{3})(?:\s+(.*))?$/);
+ if(ra&&rb){const rows=[
+  {key:'sip-version',name:'SIP version',l:'SIP/2.0',r:'SIP/2.0',st:'same',kind:'token'},
+  {key:'status',name:'Status code',l:ra[1],r:rb[1],st:ra[1]===rb[1]?'same':'chg',kind:'number'},
+  {key:'reason',name:'Reason phrase',l:ra[2]||'',r:rb[2]||'',st:valNorm(ra[2]||'')===valNorm(rb[2]||'')?'same':'chg',kind:'text',informational:true}
+ ];return{name:'Status-Line',k:'start',rfc:'RFC 3261 §25.3 — Status-Line (reason phrase is informational per §7.2)',raw:[a.start,b.start],fields:rows,changed:rows.filter(x=>!x.informational&&['chg','L','R'].includes(x.st)).length,ignored:0};}
+ const st=diffStart(a.start,b.start);return{name:'Start-Line',k:'start',rfc:'RFC 3261 §7',raw:[a.start,b.start],fields:[{key:'start',name:'Start line',l:a.start,r:b.start,st:st}],changed:st==='chg'?1:0,ignored:0};
+}
+function compareMessage2(a,b,o){
+ const out=[compareStartLine(a,b,o)];
+ const A=headerGroups2(a),B=headerGroups2(b);
+ for(const k of new Set([...A.keys(),...B.keys()])){
+  const x=A.get(k),y=B.get(k),pairs=alignValues2(x?x.v:[],y?y.v:[],k,o);
+  for(let i=0;i<pairs.length;i++){
+   const p=pairs[i],c=(p.l!==undefined&&p.r!==undefined)?compareStructured(k,p.l,p.r,o):{rows:[{key:'value',name:'Complete header value',l:p.l,r:p.r,st:p.l===undefined?'R':'L'}],changed:1,ignored:0};
+   if(o.ign.has(k)){for(const f of c.rows)if(f.st!=='L'&&f.st!=='R')f.st='ignored';c.changed=0;c.userIgnored=true;}
+   out.push({name:(x||y).n+(pairs.length>1?' ['+(i+1)+']':''),k,rfc:schemaText(k)+(c.userIgnored?' · USER IGNORED':''),raw:[p.l,p.r],fields:c.rows,changed:c.changed,ignored:c.ignored,userIgnored:c.userIgnored});
+  }
+  if(ORDERED2.has(k)&&orderingChanged(pairs)){
+   out.push({name:(x||y).n+' — ORDER',k:'order:'+k,rfc:'RFC 3261: sequence of '+k+' values is significant',raw:[null,null],fields:[{key:'order',name:'Sequence differs',l:'reordered',r:'reordered',st:'chg'}],changed:1,ignored:0});
+  }
+ }
+ const sa=secs(a.body),sb=secs(b.body);
+ for(const k of new Set([...sa.keys(),...sb.keys()])){
+  const L=sa.get(k)||[],R=sb.get(k)||[];
+  const ptMapL=buildPtMap(L),ptMapR=buildPtMap(R);
+  const opts={...o,ptMapL,ptMapR};
+  const pairs=alignSDPLines2(L,R,opts,ptMapL,ptMapR);
+  for(let i=0;i<pairs.length;i++){
+   const p=pairs[i];
+   const c=p.l!==undefined&&p.r!==undefined?compareSDPLine2(p.l,p.r,opts):{rows:[{key:'line',name:'SDP line',l:p.l,r:p.r,st:p.l===undefined?'R':'L'}],changed:1,ignored:0};
+   out.push({name:k==='body'?'Body':'SDP '+k,k:'sdp',sdpLine:(p.l||p.r||'').slice(0,2),rfc:'SDP / RFC 4566'+((p.l||p.r||'').startsWith('o=')?' §5.2':(p.l||p.r||'').startsWith('c=')?' §5.7':(p.l||p.r||'').startsWith('m=')?' §5.14':''),raw:[p.l,p.r],fields:c.rows,changed:c.changed,ignored:c.ignored,ptMap:[ptMapL,ptMapR]});
+  }
+ }
+ return out;
+}
 
 /* ---------- UI ---------- */
 const S={},DIFF3=new Set(['chg','L','R']);
@@ -223,12 +995,13 @@ const view=s=>S[s].all.filter(m=>!S[s].call||m.callId===S[s].call);const tm=m=>m
 function info(s){const x=S[s],v=view(s),u=v.filter(m=>m.proto==='UDP').length,t=v.filter(m=>m.proto==='TCP').length;$('i'+s).textContent=v.length+' SIP messages'+(u+t?' (UDP '+u+', TCP '+t+')':'')+(x.tls?'. '+x.tls+' TLS packets found: encrypted SIP cannot be decoded.':'')+(x.all.length?'':'. No SIP found.')}
 function setSide(s,raws,name,tls){S[s]={name,all:raws.map(r=>parseMsg(r.raw,r)),call:'',tls};const cs=new Map();S[s].all.forEach(m=>cs.set(m.callId,(cs.get(m.callId)||0)+1));$('n'+s).textContent=name;$('c'+s).innerHTML='<option value="">All calls ('+cs.size+')</option>'+[...cs].map(([k,n])=>'<option value="'+E(k)+'">'+E(k.slice(0,48))+' ('+n+' msgs)</option>').join('');info(s);run3()}
 async function onFile(s,f){try{const b=await f.arrayBuffer(),m=b.byteLength>3?new DataView(b).getUint32(0):0;if([0x0a0d0d0a,0xa1b2c3d4,0xd4c3b2a1,0xa1b23c4d,0x4d3cb2a1].includes(m)){const st=extract(readCap(b));setSide(s,st.msgs,f.name,st.tls)}else setSide(s,textMsgs(new TextDecoder().decode(b)),f.name,0)}catch(e){$('i'+s).textContent='Could not read file: '+e.message}}
-function escVal(v){return v===undefined||v===null?'<span class="empty">—</span>':$q(v)}
-function renderField3(f,o){let badge='';if(f.st==='chg')badge='<span class="focus-badge">FOCUS</span>';if(f.st==='ignored')badge='<span class="ignored-badge">RFC-GENERATED / IGNORED</span>';if(f.st==='L')badge='<span class="left-badge">LEFT ONLY</span>';if(f.st==='R')badge='<span class="right-badge">RIGHT ONLY</span>';const cls=f.st==='chg'?' focus':f.st==='ignored'?' ignored':(f.st==='L'?' left-only':f.st==='R'?' right-only':'');if(o.focus&&f.st==='same')return'';return'<tr class="field'+cls+'"><td class="fieldname">'+$q(f.name)+'</td><td>'+escVal(f.l)+'</td><td>'+escVal(f.r)+'</td><td>'+badge+'</td></tr>'}
-function renderSection3(sec,o){const n=sec.changed,headBadge=n?'<span class="count-badge">'+n+' changed field'+(n>1?'s':'')+'</span>':'<span class="same-badge">no changed fields</span>';const ignored=sec.fields.filter(f=>f.st==='ignored').length?'<span class="ignored-count">'+sec.fields.filter(f=>f.st==='ignored').length+' generated/ignored</span>':'';const userIgnored=sec.userIgnored?'<span class="ignored-badge">USER IGNORED</span>':'';const label='<div class="hdr-title"><strong>'+E(sec.name)+'</strong>'+userIgnored+headBadge+ignored+'</div><div class="rfc-note">'+E(sec.rfc)+'</div><div class="raw-pair"><div><span class="side-label">LEFT</span>'+escVal(sec.raw?.[0])+'</div><div><span class="side-label">RIGHT</span>'+escVal(sec.raw?.[1])+'</div></div>';let rows=sec.fields.map(f=>renderField3(f,o)).join('');if(!rows&&o.focus)rows='<tr><td colspan="4" class="empty focus-empty">No changed fields in this header.</td></tr>';return'<details class="header-card"'+(n?' open':'')+'><summary>'+label+'</summary><table class="field-table"><thead><tr><th>RFC field / parameter</th><th>'+E(S.L.name)+'</th><th>'+E(S.R.name)+'</th><th>Focus</th></tr></thead><tbody>'+rows+'</tbody></table></details>'}
-function run3(){if(!S.L||!S.R){$('out').innerHTML='';return}const o={mask:$('mask').checked,norm:$('norm').checked,focus:$('focus').checked,ign:new Set($('ign').value.toLowerCase().split(/[ ,\s]+/).filter(Boolean).map(x=>C[x]||x))};const pr=alignMessages(view('L'),view('R'));let same=0,diff=0,l=0,r=0,h='';pr.forEach(([a,b],i)=>{if(!a||!b){const m=a||b,lbl=a?'LEFT':'RIGHT';a?l++:r++;h+='<details class="m" open><summary><b>#'+(i+1)+'</b> '+E(m.label)+'<span class="only">ONLY '+lbl+'</span><span class="mu">'+tm(m)+'</span></summary><pre>'+E(m.raw)+'</pre></details>';return}const sc=compareMessage2(a,b,o);const n=sc.reduce((t,x)=>t+x.changed,0);n?diff++:same++;const secsHtml=sc.map(sec=>renderSection3(sec,o)).join('');h+='<details class="m"'+(n?' open':'')+'><summary><b>#'+(i+1)+'</b> '+E(a.label)+' vs '+E(b.label)+(n?'<span class="bd">'+n+' focused difference'+(n>1?'s':'')+'</span>':'<span class="ok">IDENTICAL</span>')+'<span class="mu">'+tm(a)+' | '+tm(b)+'</span></summary><div class="message-focus">'+secsHtml+'</div></details>'});$('sum').innerHTML=pr.length+' message slots: <b>'+same+'</b> identical, <b>'+diff+'</b> with focused differences, <b>'+l+'</b> only left, <b>'+r+'</b> only right.';$('out').innerHTML=h}
+function changedKeys(sec){return new Set(sec.fields.filter(f=>['chg','L','R'].includes(f.st)).map(f=>f.key))}
+function mark2(text,focus){return focus?'<span class="focus-value">'+$q(text)+'</span>':$q(text)}
+
+function run3(){if(!S.L||!S.R){$('out').innerHTML='';return}const o={mask:$('mask').checked,norm:$('norm').checked,focus:$('focus').checked,only:$('only').checked,ign:new Set($('ign').value.toLowerCase().split(/[ ,\s]+/).filter(Boolean).map(x=>C[x]||x))};const pr=alignMessages(view('L'),view('R'));let same=0,diff=0,l=0,r=0,h='';pr.forEach(([a,b],i)=>{if(!a||!b){const m=a||b,lbl=a?'LEFT':'RIGHT';a?l++:r++;h+='<details class="m" open><summary><b>#'+(i+1)+'</b> '+E(m.label)+'<span class="only">ONLY '+lbl+'</span><span class="mu">'+tm(m)+'</span></summary><pre>'+E(m.raw)+'</pre></details>';return}const sc=compareMessage2(a,b,o);const n=sc.reduce((t,x)=>t+x.changed,0);n?diff++:same++;const viewSecs=o.only?sc.filter(sec=>sec.changed>0||sec.fields.some(f=>f.informational&&f.st!=='same')):sc;const secsHtml=viewSecs.map(sec=>renderSection3(sec,o)).join('');h+='<details class="m"'+(n?' open':'')+'><summary><b>#'+(i+1)+'</b> '+E(a.label)+' vs '+E(b.label)+(n?'<span class="bd">'+n+' focused difference'+(n>1?'s':'')+'</span>':'<span class="ok">IDENTICAL</span>')+'<span class="mu">'+tm(a)+' | '+tm(b)+'</span></summary><div class="inline-diff">'+secsHtml+'</div></details>'});$('sum').innerHTML=pr.length+' message slots: <b>'+same+'</b> identical, <b>'+diff+'</b> with focused differences, <b>'+l+'</b> only left, <b>'+r+'</b> only right.';$('out').innerHTML=h}
 function save(s){const t=view(s).map(m=>m.raw.replace(/\r\n/g,'\n').trim()).join('\n\n')+'\n',a=document.createElement('a');a.href=URL.createObjectURL(new Blob([t],{type:'text/plain'}));a.download=S[s].name.replace(/\.[^.]+$/,'')+'.sip.txt';a.click()}
 $('panels').innerHTML=['L','R'].map(s=>'<section class="pn"><h2>'+(s==='L'?'Left':'Right')+'</h2><label class="btn">Upload pcap, pcapng or text<input type="file" id="f'+s+'" accept=".pcap,.pcapng,.cap,.txt,.log,.sip" hidden></label> <span class="mu" id="n'+s+'">No file loaded</span><details><summary class="mu">Or paste SIP text</summary><textarea id="t'+s+'" rows="6" placeholder="Paste one or more SIP messages"></textarea><button data-p="'+s+'">Load text</button></details><div class="bar"><select id="c'+s+'"><option value="">All calls</option></select><button data-v="'+s+'">Save as plain text</button></div><div class="mu" id="i'+s+'"></div></section>').join('');
 for(const s of['L','R']){$('f'+s).onchange=e=>{const f=e.target.files[0];e.target.value='';f&&onFile(s,f)};$('c'+s).onchange=e=>{S[s].call=e.target.value;info(s);run3()}}
-document.addEventListener('click',e=>{const d=e.target.dataset;if(d.p)setSide(d.p,textMsgs($('t'+d.p).value),'pasted text',0);if(d.v&&S[d.v])save(d.v)});['mask','norm','focus','ign'].forEach(i=>$(i).oninput=run3);
+document.addEventListener('click',e=>{const d=e.target.dataset;if(d.p)setSide(d.p,textMsgs($('t'+d.p).value),'pasted text',0);if(d.v&&S[d.v])save(d.v)});['mask','norm','focus','only','ign'].forEach(i=>$(i).oninput=run3);
+initDict();
 </script></main></body></html>
