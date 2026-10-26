@@ -606,6 +606,24 @@ function applySpans(raw,spans){
  out+=$q(raw.slice(pos));
  return out;
 }
+function paramTokenSpans(raw,names){
+ const spans=[];
+ for(const name of names){
+  const re=new RegExp(';\s*'+escRe(name)+'(?=\s*(?:=|;|$))','gi');
+  let m;
+  while((m=re.exec(raw))){
+   const start=m.index;let i=m.index+m[0].length,inQ=false;
+   while(i<raw.length){
+    const c=raw[i];
+    if(c==='"'&&raw[i-1]!=='\\')inQ=!inQ;
+    else if(c===';'&&!inQ)break;
+    i++;
+   }
+   spans.push({start,end:i});re.lastIndex=i;
+  }
+ }
+ return spans;
+}
 function paramValueSpans(raw,names){
  const spans=[];
  for(const name of names){
@@ -1142,7 +1160,7 @@ function highlightUri2(uri,keys){
  }else{
   const cm=authority.match(/^(.+):(\d+)$/);if(cm){out+=keys.has('uri-host')?mark2(cm[1],true):$q(cm[1]);out+=':';out+=keys.has('uri-port')?mark2(cm[2],true):$q(cm[2]);}else out+=keys.has('uri-host')?mark2(authority,true):$q(authority)
  }
- for(const p of pstr?splitSemi2(pstr):[]){const m=p.match(/^([^=]+)(?:=(.*))?$/),n=(m?m[1]:p).trim(),key='uri-param:'+n.toLowerCase();out+=';'+$q(n);if(m&&m[2]!==undefined){out+='=';out+=keys.has(key)?mark2(m[2],true):$q(m[2])}}
+ for(const p of pstr?splitSemi2(pstr):[]){const m=p.match(/^([^=]+)(?:=(.*))?$/),n=(m?m[1]:p).trim(),key='uri-param:'+n.toLowerCase();out+=';'+(keys.has(key)?mark2(p,true):$q(p))}
  if(qpos>=0){out+='?';const parts=query.split('&');parts.forEach((h,idx)=>{const m=h.match(/^([^=]+)(?:=(.*))?$/),n=(m?m[1]:h).trim(),key='uri-header:'+n.toLowerCase();out+=$q(n);if(m&&m[2]!==undefined){out+='=';out+=keys.has(key)?mark2(m[2],true):$q(m[2])}if(idx<parts.length-1)out+='&'});}
  return out;
 }
@@ -1204,7 +1222,7 @@ function highlightHeaderRaw2(sec,side,o){
    const disp=raw.slice(0,angle.lt),uri=raw.slice(angle.lt+1,angle.gt),tail=raw.slice(angle.gt+1);
    let out=(keys.has('display')&&disp)?mark2(disp,true):$q(disp);
    out+='&lt;'+highlightUri2(uri,keys)+'&gt;';
-   const tailSpans=paramValueSpans(tail,paramNames);
+   const tailSpans=paramTokenSpans(tail,paramNames);
    out+=tailSpans.length?applySpans(tail,tailSpans):$q(tail);
    return out;
   }
@@ -1212,7 +1230,7 @@ function highlightHeaderRaw2(sec,side,o){
   const uriOnly=semi<0?raw:raw.slice(0,semi);
   const tail=semi<0?'':raw.slice(semi);
   let out=highlightUri2(uriOnly,keys);
-  const tailSpans=paramValueSpans(tail,paramNames);
+  const tailSpans=paramTokenSpans(tail,paramNames);
   out+=tailSpans.length?applySpans(tail,tailSpans):$q(tail);
   return out;
  }
