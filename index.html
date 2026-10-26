@@ -1657,7 +1657,7 @@ function validateSipSequence(side){
  };
  const requestByBranch=new Map(),requestsByCseq=new Map(),seenRequests=new Set();
  const lastDialogCseq=new Map(),lastRseq=new Map(),seenReliableResponses=new Set(),reliableResponses=new Set(),pendingReliable=new Map(),lastSdp=new Map();
- const maxCseq=2147483647;
+ const maxCseq=2147483647,maxRseq=4294967295;
  for(let i=0;i<msgs.length;i++){
   const m=msgs[i],no=i+1,callId=String(m.callId||'').trim(),statusMatch=String(m.start||'').match(/^SIP\/2\.0\s+(\d{3})(?:\s|$)/i);
   const status=statusMatch?Number(statusMatch[1]):null;
@@ -1742,8 +1742,8 @@ function validateSipSequence(side){
   }
   if(status!==null&&status>=101&&status<=199&&rseqRaw){
    const rseq=Number(rseqRaw);
-   if(!/^\d+$/.test(rseqRaw)||!Number.isSafeInteger(rseq)||rseq<1||rseq>maxCseq){
-    add('error','invalid-rseq','RSeq is not a valid sequence value','RSeq must be an integer in the range 1–'+maxCseq+'.',no,null,'RFC 3262 §3');
+   if(!/^\d+$/.test(rseqRaw)||!Number.isSafeInteger(rseq)||rseq<1||rseq>maxRseq){
+    add('error','invalid-rseq','RSeq is not a valid sequence value','RSeq must be an integer in the range 1–'+maxRseq+'.',no,null,'RFC 3262 §3, §7.1');
    }else if(cseq&&cseq.method!=='INVITE'){
     add('error','rseq-non-invite','RSeq is associated with a non-INVITE response','Observed reliable provisional response has CSeq method '+cseq.method+'; RFC 3262 reliable provisional responses apply to INVITE transactions.',no,null,'RFC 3262 §3');
    }else if(cseq){
@@ -1759,9 +1759,12 @@ function validateSipSequence(side){
       add('error','next-rseq-before-prack','Another reliable provisional response arrived before PRACK','RSeq '+rseq+' was observed while the previous reliable provisional response (RSeq '+pending.rseq+') had not yet been acknowledged by PRACK.',no,pending.no,'RFC 3262 §3');
      }
      const prev=lastRseq.get(invKey);
-     if(prev&&rseq<=prev.value){
-      add('error','rseq-not-increasing','RSeq did not increase for this INVITE dialog','RSeq '+rseq+' is not greater than the previous observed RSeq '+prev.value+'. The same-status/same-RSeq retransmission case was excluded.',no,prev.no,'RFC 3262 §3');
-     }else lastRseq.set(invKey,{value:rseq,no});
+     if(!prev&&rseq>maxCseq){
+      add('error','initial-rseq-range','Initial RSeq is outside its permitted range','The first RSeq for this INVITE transaction must be between 1 and '+maxCseq+'.',no,null,'RFC 3262 §3');
+     }else if(prev&&rseq!==prev.value+1){
+      add('error','rseq-not-consecutive','RSeq is not the next sequence value','RSeq '+rseq+' was observed after '+prev.value+'; each subsequent reliable provisional response for the same request must increment RSeq by exactly one.',no,prev.no,'RFC 3262 §3');
+     }
+     if(!prev||rseq>prev.value)lastRseq.set(invKey,{value:rseq,no});
      pendingReliable.set(pendingKey,{rseq,no,acked:false});
     }
     if(rackKey)reliableResponses.add(rackKey);
@@ -1777,8 +1780,8 @@ function validateSipSequence(side){
      add('error','rack-malformed','RAck syntax is malformed','Expected RAck: <RSeq> <CSeq-number> <CSeq-method>.',no,null,'RFC 3262 §4');
     }else{
      const rr=Number(rm[1]),rc=Number(rm[2]),rmethod=rm[3];
-     if(!Number.isSafeInteger(rr)||rr<1||rr>maxCseq||!Number.isSafeInteger(rc)||rc<0||rc>maxCseq){
-      add('error','rack-range','RAck sequence value is out of range','RAck RSeq must be 1–'+maxCseq+' and RAck CSeq must be 0–'+maxCseq+'.',no,null,'RFC 3262 §4');
+     if(!Number.isSafeInteger(rr)||rr<1||rr>maxRseq||!Number.isSafeInteger(rc)||rc<0||rc>maxCseq){
+      add('error','rack-range','RAck sequence value is out of range','RAck RSeq must be 1–'+maxRseq+' and RAck CSeq must be 0–'+maxCseq+'.',no,null,'RFC 3262 §4, §7.2');
      }else if(rmethod!=='INVITE'){
       add('error','rack-method','RAck does not reference an INVITE','The RAck method is '+rmethod+'; this validator expects the reliable provisional response to belong to an INVITE transaction.',no,null,'RFC 3262 §4');
      }else{
