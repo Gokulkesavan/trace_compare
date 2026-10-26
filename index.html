@@ -1634,6 +1634,10 @@ function seqStartMethod(m){
  const x=String(m.start||'').match(/^([^\s]+)\s+\S+\s+SIP\/2\.0\s*$/i);
  return x?x[1]:'';
 }
+function seqHasSdp(m){
+ const body=String(m.body||'');
+ return /application\/sdp/i.test(seqHeader(m,'content-type'))||/(?:^|\n)v=0\s*(?:\n|$)/i.test(body.replace(/\r\n/g,'\n'))||/(?:^|\n)o=\S/i.test(body.replace(/\r\n/g,'\n'));
+}
 function seqNormalizeSDP(lines){
  return lines.map(line=>{
   let x=String(line||'').trim().replace(/\s+/g,' ');
@@ -1748,14 +1752,15 @@ function validateSipSequence(side){
     add('error','rseq-non-invite','RSeq is associated with a non-INVITE response','Observed reliable provisional response has CSeq method '+cseq.method+'; RFC 3262 reliable provisional responses apply to INVITE transactions.',no,null,'RFC 3262 §3');
    }else if(cseq){
     const invKey=JSON.stringify([callId,branch,cseq.num,cseq.method,toTag]);
-    const respKey=JSON.stringify([invKey,status,rseq]);
+    const respBodySig=String(m.body||'').replace(/\r\n/g,'\n').trim();
+    const respKey=JSON.stringify([invKey,status,rseq,respBodySig]);
     const dlg=seqDialogKey(m);
     const rackKey=dlg?JSON.stringify([dlg,rseq,cseq.num,cseq.method]):'';
     if(!seenReliableResponses.has(respKey)){
      seenReliableResponses.add(respKey);
      const pendingKey=dlg?JSON.stringify([dlg,cseq.num,cseq.method]):invKey;
-     const pending=pendingReliable.get(pendingKey);
-     if(pending&&!pending.acked&&pending.rseq!==rseq){
+     const pendingList=pendingReliable.get(pendingKey)||[],pending=pendingList.find(p=>!p.acked);
+     if(pending&&pending.rseq!==rseq){
       add('error','next-rseq-before-prack','Another reliable provisional response arrived before PRACK','RSeq '+rseq+' was observed while the previous reliable provisional response (RSeq '+pending.rseq+') had not yet been acknowledged by PRACK.',no,pending.no,'RFC 3262 §3');
      }
      const prev=lastRseq.get(invKey);
@@ -1765,10 +1770,16 @@ function validateSipSequence(side){
       add('error','rseq-not-consecutive','RSeq is not the next sequence value','RSeq '+rseq+' was observed after '+prev.value+'; each subsequent reliable provisional response for the same request must increment RSeq by exactly one.',no,prev.no,'RFC 3262 §3');
      }
      if(!prev||rseq>prev.value)lastRseq.set(invKey,{value:rseq,no});
-     pendingReliable.set(pendingKey,{rseq,no,acked:false});
+     pendingList.push({rseq,no,acked:false,hasSdp:seqHasSdp(m)});
+     pendingReliable.set(pendingKey,pendingList);
     }
     if(rackKey)reliableResponses.add(rackKey);
    }
+  }
+  if(status!==null&&status>=200&&status<300&&cseq&&cseq.method==='INVITE'){
+   const dlg=seqDialogKey(m),pendingKey=dlg?JSON.stringify([dlg,cseq.num,cseq.method]):'',pendingList=pendingKey?(pendingReliable.get(pendingKey)||[]):[];
+   const outstanding=pendingList.find(p=>!p.acked&&p.hasSdp);
+   if(outstanding)add('error','final-invite-before-prack','2xx INVITE response preceded acknowledgement of an SDP-bearing reliable response','A final 2xx response was observed while reliable provisional response RSeq '+outstanding.rseq+' carrying SDP was still unacknowledged.',no,outstanding.no,'RFC 3262 §3');
   }
   const rackRaw=seqHeader(m,'rack');
   if(requestMethod==='PRACK'){
@@ -1789,8 +1800,9 @@ function validateSipSequence(side){
       if(!key||!reliableResponses.has(key)){
        add('warning','rack-reference-not-found','RAck reference was not found in the selected trace','RAck references RSeq '+rr+', CSeq '+rc+' '+rmethod+', but no matching reliable provisional response was observed earlier in this dialog. The capture may be incomplete.',no,null,'RFC 3262 §4');
       }else{
-       const pendingKey=JSON.stringify([dlg,rc,rmethod]),pending=pendingReliable.get(pendingKey);
-       if(pending&&pending.rseq===rr)pending.acked=true;
+       const pendingKey=JSON.stringify([dlg,rc,rmethod]),pendingList=pendingReliable.get(pendingKey)||[];
+       const pending=pendingList.find(p=>p.rseq===rr&&!p.acked);
+       if(pending)pending.acked=true;
       }
      }
     }
