@@ -1678,6 +1678,9 @@ function validateSipSequence(side){
    }
   }
   const fromTag=seqTag(m,'from'),toTag=seqTag(m,'to'),branch=seqBranch(m);
+  if(status!==null&&status>100&&status<200&&!toTag){
+   add('error','provisional-missing-to-tag','Provisional response is missing a To tag','Responses 101–199 must carry a To tag to identify the dialog; 100 Trying is excluded.',no,null,'RFC 3261 §8.2.6.2');
+  }
   const branchKey=branch?JSON.stringify([callId,branch]):'';
   if(requestMethod&&cseq&&cseq.num<=maxCseq){
    const txIdentity=JSON.stringify([callId,branch||'(no-branch)',cseq.num,cseq.method,fromTag,toTag,requestMethod]);
