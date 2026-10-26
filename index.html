@@ -1709,6 +1709,10 @@ function validateSipSequence(side){
      if(!match){
       const related=candidates.find(q=>q.method===cseq.method)||candidates[candidates.length-1];
       add('error','response-cseq-mismatch','Response CSeq does not match its observed request','Response carries '+cseq.num+' '+cseq.method+' but the request seen on this Call-ID/Via branch used '+related.num+' '+related.method+'.',no,related.no,'RFC 3261 §8.2.6.2');
+     }else if(match.method==='INVITE'&&!match.toTag&&match.fromTag&&fromTag===match.fromTag&&toTag){
+      /* The first tagged response establishes an early dialog; seed the caller's local CSeq baseline from its initial INVITE. */
+      const dlg=JSON.stringify([callId,[match.fromTag,toTag].sort(),match.fromTag]),prev=lastDialogCseq.get(dlg);
+      if(!prev||match.num>prev.num)lastDialogCseq.set(dlg,{num:match.num,method:'INVITE',no:match.no});
      }
     }else{
      const same=requestsByCseq.get(JSON.stringify([callId,cseq.num,cseq.method]))||[];
