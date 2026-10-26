@@ -1833,8 +1833,10 @@ function validateSipSequence(side){
       const signature=seqNormalizeSDP(lines),sdpKey=JSON.stringify([callId,of[0],of[1]]);
       const prev=lastSdp.get(sdpKey);
       if(prev){
-       if(version<prev.version){
-        add('error','sdp-version-decreased','SDP session version decreased','The same SDP origin session moved from version '+String(prev.version)+' to '+String(version)+'.',no,prev.no,'RFC 4566 §5.2; RFC 3264 §8');
+       if(version<prev.version&&signature!==prev.signature){
+        add('error','sdp-version-decreased','SDP changed while its session version decreased','The same SDP origin session moved from version '+String(prev.version)+' to '+String(version)+' while the normalized session description also changed.',no,prev.no,'RFC 4566 §5.2; RFC 3264 §8');
+       }else if(version<prev.version&&signature===prev.signature){
+        add('warning','sdp-version-out-of-order','SDP session version moved backwards','The same normalized session description was observed with version '+String(version)+' after version '+String(prev.version)+'. This may be a stale retransmission or out-of-order/incomplete capture.',no,prev.no,'RFC 4566 §5.2');
        }else if(version===prev.version&&signature!==prev.signature){
         add('error','sdp-version-unchanged','SDP changed without an origin session-version increment','The SDP session description differs from the previous observed version '+String(prev.version)+', but the o= session-version remained '+String(version)+'.',no,prev.no,'RFC 4566 §5.2; RFC 3264 §8');
        }
