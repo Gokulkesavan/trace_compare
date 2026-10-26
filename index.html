@@ -1656,7 +1656,7 @@ function validateSipSequence(side){
   findings.push({severity,code,title,detail,message,related,rfc:rfc||''});
  };
  const requestByBranch=new Map(),requestsByCseq=new Map(),seenRequests=new Set();
- const lastDialogCseq=new Map(),lastRseq=new Map(),seenReliableResponses=new Set(),reliableResponses=new Set(),lastSdp=new Map();
+ const lastDialogCseq=new Map(),lastRseq=new Map(),seenReliableResponses=new Set(),reliableResponses=new Set(),pendingReliable=new Map(),lastSdp=new Map();
  const maxCseq=2147483647;
  for(let i=0;i<msgs.length;i++){
   const m=msgs[i],no=i+1,callId=String(m.callId||'').trim(),statusMatch=String(m.start||'').match(/^SIP\/2\.0\s+(\d{3})(?:\s|$)/i);
@@ -1746,10 +1746,16 @@ function validateSipSequence(side){
     const rackKey=dlg?JSON.stringify([dlg,rseq,cseq.num,cseq.method]):'';
     if(!seenReliableResponses.has(respKey)){
      seenReliableResponses.add(respKey);
+     const pendingKey=dlg?JSON.stringify([dlg,cseq.num,cseq.method]):invKey;
+     const pending=pendingReliable.get(pendingKey);
+     if(pending&&!pending.acked&&pending.rseq!==rseq){
+      add('error','next-rseq-before-prack','Another reliable provisional response arrived before PRACK','RSeq '+rseq+' was observed while the previous reliable provisional response (RSeq '+pending.rseq+') had not yet been acknowledged by PRACK.',no,pending.no,'RFC 3262 §3');
+     }
      const prev=lastRseq.get(invKey);
      if(prev&&rseq<=prev.value){
       add('error','rseq-not-increasing','RSeq did not increase for this INVITE dialog','RSeq '+rseq+' is not greater than the previous observed RSeq '+prev.value+'. The same-status/same-RSeq retransmission case was excluded.',no,prev.no,'RFC 3262 §3');
      }else lastRseq.set(invKey,{value:rseq,no});
+     pendingReliable.set(pendingKey,{rseq,no,acked:false});
     }
     if(rackKey)reliableResponses.add(rackKey);
    }
@@ -1772,6 +1778,9 @@ function validateSipSequence(side){
       const dlg=seqDialogKey(m),key=dlg?JSON.stringify([dlg,rr,rc,rmethod]):'';
       if(!key||!reliableResponses.has(key)){
        add('warning','rack-reference-not-found','RAck reference was not found in the selected trace','RAck references RSeq '+rr+', CSeq '+rc+' '+rmethod+', but no matching reliable provisional response was observed earlier in this dialog. The capture may be incomplete.',no,null,'RFC 3262 §4');
+      }else{
+       const pendingKey=JSON.stringify([dlg,rc,rmethod]),pending=pendingReliable.get(pendingKey);
+       if(pending&&pending.rseq===rr)pending.acked=true;
       }
      }
     }
