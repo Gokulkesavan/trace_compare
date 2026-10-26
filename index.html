@@ -1196,7 +1196,7 @@ function highlightHeaderRaw2(sec,side,o){
  }
  if(k&&k.startsWith('order:')) return $q(raw);
  if(keys.size===0) return $q(raw);
- if(k==='allow'){return String(raw).split(',').map(t=>{const x=t.trim();if(!x)return $q(t);const lead=t.slice(0,t.indexOf(x)),trail=t.slice(t.indexOf(x)+x.length);return $q(lead)+(keys.has('item:'+x)?mark2(x,true):$q(x))+$q(trail)}).join(',')}
+ if(k==='allow'||(SCHEMA[k]&&SCHEMA[k].kind==='token-list')){return String(raw).split(',').map(t=>{const x=t.trim();if(!x)return $q(t);const lead=t.slice(0,t.indexOf(x)),trail=t.slice(t.indexOf(x)+x.length);const key='item:'+(k==='allow'?x:x.toLowerCase());return $q(lead)+(keys.has(key)?mark2(x,true):$q(x))+$q(trail)}).join(',')}
  const paramNames=[...keys].filter(x=>x.startsWith('param:')).map(x=>x.slice(6));
  if(NAMEADDR_HDRS.has(k)){
   const angle=findAngle(raw);
