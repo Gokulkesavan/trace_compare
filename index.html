@@ -1180,6 +1180,13 @@ function highlightHeaderRaw2(sec,side,o){
  if(k==='via')return highlightVia2(raw,keys);
  if(k==='sdp')return highlightSDP2(raw,sec,side,o);
  if(k==='start'){
+  const statusLine=String(raw).match(/^(SIP\/2\.0)(\s+)(\d{3})(?:\s+(.*))?$/);
+  if(statusLine){
+   const reason=sec.fields.find(f=>f.key==='reason');
+   const prefix=$q(statusLine[1]+statusLine[2])+((sec.fields.find(f=>f.key==='status')?.st==='chg')?mark2(statusLine[3],true):$q(statusLine[3]));
+   if(statusLine[4]!==undefined){const phrase=reason&&reason.st==='chg'?mark2(statusLine[4],true):$q(statusLine[4]);return prefix+' '+phrase;}
+   return prefix;
+  }
   const m=String(raw).match(/^(\S+)(\s+)(\S+)(\s+SIP\/2\.0)$/);
   if(m){
    const mo=keys.has('start-method')?mark2(m[1],true):$q(m[1]);
@@ -1429,7 +1436,7 @@ function compareStartLine(a,b,o){
   {key:'sip-version',name:'SIP version',l:'SIP/2.0',r:'SIP/2.0',st:'same',kind:'token'},
   {key:'status',name:'Status code',l:ra[1],r:rb[1],st:ra[1]===rb[1]?'same':'chg',kind:'number'},
   {key:'reason',name:'Reason phrase',l:ra[2]||'',r:rb[2]||'',st:valNorm(ra[2]||'')===valNorm(rb[2]||'')?'same':'chg',kind:'text',informational:true}
- ];return{name:'Status-Line',k:'start',rfc:'RFC 3261 §25.3 — Status-Line (reason phrase is informational per §7.2)',raw:[a.start,b.start],fields:rows,changed:rows.filter(x=>!x.informational&&['chg','L','R'].includes(x.st)).length,ignored:0};}
+ ];return{name:'Status-Line',k:'start',rfc:'RFC 3261 §25.3 — status code is significant; reason phrase is informational per §7.2 but shown when different',raw:[a.start,b.start],fields:rows,changed:rows.filter(x=>['chg','L','R'].includes(x.st)).length,ignored:0};}
  const st=diffStart(a.start,b.start);return{name:'Start-Line',k:'start',rfc:'RFC 3261 §7',raw:[a.start,b.start],fields:[{key:'start',name:'Start line',l:a.start,r:b.start,st:st}],changed:st==='chg'?1:0,ignored:0};
 }
 /* declared Content-Length vs. real body octets (CRLF on the wire; text exports may be LF / lack the final newline) */
