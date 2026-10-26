@@ -253,6 +253,36 @@ table{border-collapse:collapse;width:100%}
   .brand-text p{display:none}
   .brand-text h1{font-size:14px}
 }
+
+.validation-wrap:not(:empty){margin:18px 0 22px}
+.sv-panel{border:1px solid var(--border);border-radius:var(--radius-lg);background:var(--surface);box-shadow:var(--shadow-xs);overflow:hidden}
+.sv-heading{padding:15px 17px;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;justify-content:space-between;gap:14px}
+.sv-heading h2{font-size:15px;line-height:1.35;font-weight:700}
+.sv-heading p{font-size:12px;color:var(--text-2);margin-top:4px;max-width:800px}
+.sv-local{font-size:11px;color:var(--text-2);border:1px solid var(--border);border-radius:999px;padding:3px 8px;white-space:nowrap}
+.sv-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;padding:12px}
+.sv-side{border:1px solid var(--border);border-radius:var(--radius);min-width:0;overflow:hidden}
+.sv-side-head{padding:11px 12px;background:var(--surface-2);border-bottom:1px solid var(--border)}
+.sv-side-head strong{display:block;font-size:13px}
+.sv-side-meta{display:flex;flex-wrap:wrap;gap:6px;margin-top:7px}
+.sv-count{font-size:11px;border-radius:999px;padding:2px 7px;background:var(--surface-3);color:var(--text-2)}
+.sv-count.err{background:var(--del-bg);color:var(--del-fg)}
+.sv-count.warn{background:var(--chg-bg);color:var(--chg-fg)}
+.sv-count.info{background:var(--accent-soft);color:var(--accent)}
+.sv-findings{list-style:none;margin:0;padding:0}
+.sv-finding{padding:10px 12px;border-bottom:1px solid var(--border);display:grid;grid-template-columns:auto minmax(0,1fr);gap:9px;align-items:start}
+.sv-finding:last-child{border-bottom:0}
+.sv-level{font-size:10px;line-height:1.4;font-weight:750;border-radius:5px;padding:3px 5px;letter-spacing:.02em}
+.sv-level.error{background:var(--del-bg);color:var(--del-fg)}
+.sv-level.warning{background:var(--chg-bg);color:var(--chg-fg)}
+.sv-level.info{background:var(--accent-soft);color:var(--accent)}
+.sv-finding strong{font-size:12px;display:block;line-height:1.45}
+.sv-detail{font-size:12px;color:var(--text-2);margin-top:3px;overflow-wrap:anywhere}
+.sv-ref{font-size:11px;color:var(--text-3);margin-top:5px}
+.sv-empty{padding:14px 12px;font-size:12px;color:var(--text-2)}
+.sv-foot{font-size:11px;line-height:1.5;color:var(--text-3);padding:0 14px 13px}
+@media(max-width:760px){.sv-grid{grid-template-columns:minmax(0,1fr)}.sv-heading{flex-direction:column}.sv-local{align-self:flex-start}}
+
 </style></head>
 <body>
 
@@ -341,6 +371,8 @@ table{border-collapse:collapse;width:100%}
     </div>
     <div id="sum" class="mu">Load a capture or text on both sides to compare.</div>
   </section>
+
+  <section id="validation" class="validation-wrap" aria-live="polite"></section>
 
   <div id="out"></div>
 </main>
@@ -1569,7 +1601,250 @@ async function onFile(s,f){try{const b=await f.arrayBuffer(),m=b.byteLength>3?ne
 function changedKeys(sec){return new Set(sec.fields.filter(f=>!f.informational&&['chg','L','R'].includes(f.st)).map(f=>f.key))}
 function mark2(text,focus){return focus?'<span class="focus-value">'+$q(text)+'</span>':$q(text)}
 
-function run3(){if(!S.L||!S.R){$('out').innerHTML='';return}info('L');info('R');const o={ignp:new Set($('ignp').value.toLowerCase().split(/[ ,\s]+/).filter(Boolean)),mask:$('mask').checked,norm:$('norm').checked,focus:$('focus').checked,only:$('only').checked,ign:new Set($('ign').value.toLowerCase().split(/[ ,\s]+/).filter(Boolean).map(x=>C[x]||x))};const pr=alignMessages(view('L'),view('R'));let same=0,diff=0,l=0,r=0,h='';pr.forEach(([a,b],i)=>{if(!a||!b){const m=a||b,lbl=a?'LEFT':'RIGHT';a?l++:r++;h+='<details class="m" open><summary><b>#'+(i+1)+'</b> '+E(m.label)+'<span class="only">ONLY '+lbl+'</span><span class="mu">'+tm(m)+'</span></summary><pre>'+E(m.raw)+'</pre></details>';return}const sc=compareMessage2(a,b,o);const n=sc.reduce((t,x)=>t+x.changed,0);n?diff++:same++;/* Section-level filter is handled inside renderSection3 via o.only. */const viewSecs=sc;const secsHtml=viewSecs.map(sec=>renderSection3(sec,o)).join('');h+='<details class="m"'+(n?' open':'')+'><summary><b>#'+(i+1)+'</b> '+E(a.label)+' vs '+E(b.label)+(n?'<span class="bd">'+n+' focused difference'+(n>1?'s':'')+'</span>':'<span class="ok">IDENTICAL</span>')+'<span class="mu">'+tm(a)+' | '+tm(b)+'</span></summary><div class="inline-diff">'+secsHtml+'</div></details>'});$('sum').innerHTML=pr.length+' message slots: <b>'+same+'</b> identical, <b>'+diff+'</b> with focused differences, <b>'+l+'</b> only left, <b>'+r+'</b> only right.';$('out').innerHTML=h}
+
+/* ---------- Stateful SIP sequence validation (independent of the semantic-diff engine) ---------- */
+function seqHeader(m,name){
+ const h=(m.hs||[]).find(x=>x.k===name);
+ return h?String(h.v||'').trim():'';
+}
+function seqHeaderValues(m,name){
+ return (m.hs||[]).filter(x=>x.k===name).map(x=>String(x.v||'').trim()).filter(Boolean);
+}
+function seqTag(m,name){
+ const v=seqHeader(m,name),x=v.match(/;\s*tag\s*=\s*("?[^";,\s>]+"?)/i);
+ return x?x[1].replace(/^"|"$/g,''):'';
+}
+function seqBranch(m){
+ const v=seqHeader(m,'via'),x=v.match(/\bbranch\s*=\s*("?[^";,\s>]+"?)/i);
+ return x?x[1].replace(/^"|"$/g,''):'';
+}
+function seqCseq(m){
+ const raw=seqHeader(m,'cseq'),x=raw.match(/^(\d+)\s+([^\s]+)$/);
+ if(!x)return null;
+ const num=Number(x[1]);
+ if(!Number.isSafeInteger(num)||num<0)return null;
+ return {num,method:x[2],raw};
+}
+function seqDialogKey(m){
+ const a=seqTag(m,'from'),b=seqTag(m,'to');
+ if(!a||!b)return '';
+ return JSON.stringify([String(m.callId||''),[a,b].sort()]);
+}
+function seqStartMethod(m){
+ const x=String(m.start||'').match(/^([^\s]+)\s+\S+\s+SIP\/2\.0\s*$/i);
+ return x?x[1]:'';
+}
+function seqNormalizeSDP(lines){
+ return lines.map(line=>{
+  let x=String(line||'').trim().replace(/\s+/g,' ');
+  if(/^o=/i.test(x)){
+   const a=x.slice(2).trim().split(/\s+/);
+   if(a.length>=6)x='o='+a[0]+' '+a[1]+' <session-version> '+a.slice(3).join(' ');
+  }
+  return x;
+ }).filter(Boolean).join('\n');
+}
+function validateSipSequence(side){
+ const sideState=S[side];
+ if(!sideState)return null;
+ const msgs=sideState.all.filter(m=>
+  (!sideState.call||m.callId===sideState.call)&&
+  (!sideState.leg||legKey(m)===sideState.leg)
+ );
+ const findings=[];
+ const add=(severity,code,title,detail,message,related,rfc)=>{
+  findings.push({severity,code,title,detail,message,related,rfc:rfc||''});
+ };
+ const requestByBranch=new Map(),requestsByCseq=new Map(),seenRequests=new Set();
+ const lastDialogCseq=new Map(),lastRseq=new Map(),seenReliableResponses=new Set(),reliableResponses=new Set(),lastSdp=new Map();
+ const maxCseq=2147483647;
+ for(let i=0;i<msgs.length;i++){
+  const m=msgs[i],no=i+1,callId=String(m.callId||'').trim(),statusMatch=String(m.start||'').match(/^SIP\/2\.0\s+(\d{3})(?:\s|$)/i);
+  const status=statusMatch?Number(statusMatch[1]):null;
+  const requestMethod=status===null?seqStartMethod(m):'';
+  if(status===null&&!requestMethod)continue;
+  if(!callId||callId==='(none)'){
+   add('error','missing-call-id','Missing Call-ID','A SIP message must carry a Call-ID; dialog and transaction correlation cannot be trusted.',no,null,'RFC 3261 §8.1.1.4, §8.2.6.2');
+  }
+  const cseqRaw=seqHeader(m,'cseq'),cseq=seqCseq(m);
+  if(!cseq){
+   add('error','invalid-cseq','Missing or malformed CSeq','Expected a numeric sequence value followed by a method token; checks that depend on CSeq are skipped for this message.',no,null,'RFC 3261 §8.1.1.5');
+  }else{
+   if(cseq.num>maxCseq){
+    add('error','cseq-range','CSeq value is out of range','CSeq sequence number '+cseq.num+' exceeds the RFC 3261 maximum of '+maxCseq+'.',no,null,'RFC 3261 §20.16');
+   }
+   if(requestMethod&&cseq.method!==requestMethod){
+    add('error','cseq-method-mismatch','Request method and CSeq method differ','Request line uses '+requestMethod+' but CSeq is '+cseq.num+' '+cseq.method+'.',no,null,'RFC 3261 §8.1.1.5');
+   }
+  }
+  const fromTag=seqTag(m,'from'),toTag=seqTag(m,'to'),branch=seqBranch(m);
+  const branchKey=branch?JSON.stringify([callId,branch]):'';
+  if(requestMethod&&cseq&&cseq.num<=maxCseq){
+   const txIdentity=JSON.stringify([callId,branch||'(no-branch)',cseq.num,cseq.method,fromTag,toTag,requestMethod]);
+   const retransmission=seenRequests.has(txIdentity);
+   if(!retransmission){
+    seenRequests.add(txIdentity);
+    const rec={num:cseq.num,method:cseq.method,requestMethod,branch,fromTag,toTag,no};
+    if(branchKey){
+     const list=requestByBranch.get(branchKey)||[];
+     list.push(rec);requestByBranch.set(branchKey,list);
+    }
+    const ck=JSON.stringify([callId,cseq.num,cseq.method]),sameCseq=requestsByCseq.get(ck)||[];
+    sameCseq.push(rec);requestsByCseq.set(ck,sameCseq);
+   }
+   if(!retransmission&&cseq.method===requestMethod&&cseq.method!=='ACK'&&cseq.method!=='CANCEL'&&fromTag&&toTag){
+    const dlg=JSON.stringify([callId,[fromTag,toTag].sort(),fromTag]);
+    const prev=lastDialogCseq.get(dlg);
+    if(prev&&cseq.num<=prev.num){
+     add('error','dialog-cseq-not-increasing','In-dialog CSeq did not increase','This new '+requestMethod+' request uses CSeq '+cseq.num+'; the previous observed request from the same dialog endpoint used '+prev.num+' ('+prev.method+'). ACK, CANCEL and recognized retransmissions are excluded.',no,prev.no,'RFC 3261 §12.2.1.1');
+    }
+    if(!prev||cseq.num>prev.num)lastDialogCseq.set(dlg,{num:cseq.num,method:requestMethod,no});
+   }
+  }
+  if(status!==null&&cseq&&cseq.num<=maxCseq){
+   if(branchKey){
+    const candidates=requestByBranch.get(branchKey)||[];
+    if(candidates.length){
+     const match=candidates.find(q=>q.num===cseq.num&&q.method===cseq.method);
+     if(!match){
+      const related=candidates.find(q=>q.method===cseq.method)||candidates[candidates.length-1];
+      add('error','response-cseq-mismatch','Response CSeq does not match its observed request','Response carries '+cseq.num+' '+cseq.method+' but the request seen on this Call-ID/Via branch used '+related.num+' '+related.method+'.',no,related.no,'RFC 3261 §8.2.6.2');
+     }
+    }else{
+     const same=requestsByCseq.get(JSON.stringify([callId,cseq.num,cseq.method]))||[];
+     if(same.length){
+      add('warning','response-branch-mismatch','Response branch did not match the observed request','A request with the same Call-ID and CSeq was seen, but not on this response Via branch. A proxy leg or incomplete capture may explain this.',no,same[same.length-1].no,'RFC 3261 §17.2.3');
+     }else{
+      add('info','response-request-unobserved','Response transaction could not be verified','No matching request is present earlier in the selected trace. This is inconclusive, not proof of a malformed response.',no,null,'RFC 3261 §8.2.6.2');
+     }
+    }
+   }else{
+    add('info','response-branch-unavailable','Response transaction correlation is limited','The response has no parseable top Via branch, so its CSeq cannot be correlated confidently with a request.',no,null,'RFC 3261 §17.2.3');
+   }
+  }
+  const require100rel=seqHeaderValues(m,'require').some(v=>v.split(',').some(t=>t.trim().toLowerCase()==='100rel'));
+  const rseqRaw=seqHeader(m,'rseq');
+  if(status!==null&&rseqRaw&&!(status>=101&&status<=199)){
+   add('error','rseq-invalid-status','RSeq appears outside a reliable provisional response','RSeq is only expected on a reliable provisional response (101–199), not status '+status+'.',no,null,'RFC 3262 §3');
+  }
+  if(status!==null&&status>=101&&status<=199&&require100rel&&!rseqRaw){
+   add('error','missing-rseq','100rel response is missing RSeq','The provisional response requires 100rel but has no RSeq header.',no,null,'RFC 3262 §3');
+  }
+  if(status!==null&&status>=101&&status<=199&&rseqRaw&&!require100rel){
+   add('error','rseq-without-100rel','RSeq response is missing Require: 100rel','A reliable provisional response carrying RSeq must indicate 100rel support with the Require option tag.',no,null,'RFC 3262 §3');
+  }
+  if(status!==null&&status>=101&&status<=199&&rseqRaw){
+   const rseq=Number(rseqRaw);
+   if(!/^\d+$/.test(rseqRaw)||!Number.isSafeInteger(rseq)||rseq<1||rseq>maxCseq){
+    add('error','invalid-rseq','RSeq is not a valid sequence value','RSeq must be an integer in the range 1–'+maxCseq+'.',no,null,'RFC 3262 §3');
+   }else if(cseq&&cseq.method!=='INVITE'){
+    add('error','rseq-non-invite','RSeq is associated with a non-INVITE response','Observed reliable provisional response has CSeq method '+cseq.method+'; RFC 3262 reliable provisional responses apply to INVITE transactions.',no,null,'RFC 3262 §3');
+   }else if(cseq){
+    const invKey=JSON.stringify([callId,branch,cseq.num,cseq.method,toTag]);
+    const respKey=JSON.stringify([invKey,status,rseq]);
+    const dlg=seqDialogKey(m);
+    const rackKey=dlg?JSON.stringify([dlg,rseq,cseq.num,cseq.method]):'';
+    if(!seenReliableResponses.has(respKey)){
+     seenReliableResponses.add(respKey);
+     const prev=lastRseq.get(invKey);
+     if(prev&&rseq<=prev.value){
+      add('error','rseq-not-increasing','RSeq did not increase for this INVITE dialog','RSeq '+rseq+' is not greater than the previous observed RSeq '+prev.value+'. The same-status/same-RSeq retransmission case was excluded.',no,prev.no,'RFC 3262 §3');
+     }else lastRseq.set(invKey,{value:rseq,no});
+    }
+    if(rackKey)reliableResponses.add(rackKey);
+   }
+  }
+  const rackRaw=seqHeader(m,'rack');
+  if(requestMethod==='PRACK'){
+   if(!rackRaw){
+    add('error','prack-missing-rack','PRACK is missing RAck','Every PRACK must identify the reliable provisional response it acknowledges.',no,null,'RFC 3262 §4');
+   }else{
+    const rm=rackRaw.match(/^(\d+)\s+(\d+)\s+([^\s]+)$/);
+    if(!rm){
+     add('error','rack-malformed','RAck syntax is malformed','Expected RAck: <RSeq> <CSeq-number> <CSeq-method>.',no,null,'RFC 3262 §4');
+    }else{
+     const rr=Number(rm[1]),rc=Number(rm[2]),rmethod=rm[3];
+     if(!Number.isSafeInteger(rr)||rr<1||rr>maxCseq||!Number.isSafeInteger(rc)||rc<0||rc>maxCseq){
+      add('error','rack-range','RAck sequence value is out of range','RAck RSeq must be 1–'+maxCseq+' and RAck CSeq must be 0–'+maxCseq+'.',no,null,'RFC 3262 §4');
+     }else if(rmethod!=='INVITE'){
+      add('error','rack-method','RAck does not reference an INVITE','The RAck method is '+rmethod+'; this validator expects the reliable provisional response to belong to an INVITE transaction.',no,null,'RFC 3262 §4');
+     }else{
+      const dlg=seqDialogKey(m),key=dlg?JSON.stringify([dlg,rr,rc,rmethod]):'';
+      if(!key||!reliableResponses.has(key)){
+       add('warning','rack-reference-not-found','RAck reference was not found in the selected trace','RAck references RSeq '+rr+', CSeq '+rc+' '+rmethod+', but no matching reliable provisional response was observed earlier in this dialog. The capture may be incomplete.',no,null,'RFC 3262 §4');
+      }
+     }
+    }
+   }
+  }else if(rackRaw){
+   add('warning','rack-on-non-prack','RAck appears on a non-PRACK request','RAck is intended to acknowledge a reliable provisional response in PRACK.',no,null,'RFC 3262 §4');
+  }
+  const body=String(m.body||''),lines=body.replace(/\r\n/g,'\n').split('\n');
+  const contentType=seqHeader(m,'content-type');
+  const originLines=lines.filter(line=>/^o=/i.test(line.trim()));
+  const looksSdp=/application\/sdp/i.test(contentType)||lines.some(line=>/^v=0\s*$/i.test(line.trim()))||originLines.length>0;
+  if(looksSdp){
+   const hasV0=lines.some(line=>/^v=0\s*$/i.test(line.trim()));
+   if(!hasV0)add('error','sdp-missing-v','SDP is missing the mandatory v=0 line','The message body looks like SDP but no v=0 line was found.',no,null,'RFC 4566 §5');
+   if(!originLines.length){
+    add('error','sdp-missing-origin','SDP is missing the mandatory o= line','No SDP origin line was found, so session-version tracking is unavailable.',no,null,'RFC 4566 §5.2');
+   }else if(originLines.length>1){
+    add('error','sdp-multiple-origin','SDP has multiple origin lines','An SDP session description has one session-level origin line; additional o= lines make version tracking ambiguous.',no,null,'RFC 4566 §5.2');
+   }
+   if(originLines.length){
+    const of=originLines[0].trim().slice(2).trim().split(/\s+/);
+    if(of.length!==6||!/^\d+$/.test(of[1]||'')||!/^\d+$/.test(of[2]||'')){
+     add('error','sdp-origin-malformed','SDP origin syntax is malformed','Expected o=<username> <sess-id> <sess-version> <nettype> <addrtype> <unicast-address>.',no,null,'RFC 4566 §5.2');
+    }else{
+     let version;
+     try{version=BigInt(of[2])}catch(e){version=null}
+     if(version!==null){
+      const signature=seqNormalizeSDP(lines),sdpKey=JSON.stringify([callId,of[0],of[1]]);
+      const prev=lastSdp.get(sdpKey);
+      if(prev){
+       if(version<prev.version){
+        add('error','sdp-version-decreased','SDP session version decreased','The same SDP origin session moved from version '+String(prev.version)+' to '+String(version)+'.',no,prev.no,'RFC 4566 §5.2; RFC 3264 §8');
+       }else if(version===prev.version&&signature!==prev.signature){
+        add('error','sdp-version-unchanged','SDP changed without an origin session-version increment','The SDP session description differs from the previous observed version '+String(prev.version)+', but the o= session-version remained '+String(version)+'.',no,prev.no,'RFC 4566 §5.2; RFC 3264 §8');
+       }
+       if(version>=prev.version&&(version>prev.version||signature===prev.signature))lastSdp.set(sdpKey,{version,signature,no});
+      }else lastSdp.set(sdpKey,{version,signature,no});
+     }
+    }
+   }
+  }
+ }
+ return {messages:msgs.length,findings};
+}
+function renderValidationSide(side){
+ const result=validateSipSequence(side);
+ const label=side==='L'?'Left trace':'Right trace',findings=result.findings;
+ const errors=findings.filter(x=>x.severity==='error').length;
+ const warnings=findings.filter(x=>x.severity==='warning').length;
+ const infos=findings.filter(x=>x.severity==='info').length;
+ let html='<div class="sv-side"><div class="sv-side-head"><strong>'+label+'</strong><div class="sv-side-meta"><span class="sv-count">'+result.messages+' messages assessed</span><span class="sv-count err">'+errors+' error'+(errors===1?'':'s')+'</span><span class="sv-count warn">'+warnings+' warning'+(warnings===1?'':'s')+'</span><span class="sv-count info">'+infos+' inconclusive</span></div></div>';
+ if(!findings.length){
+  html+='<div class="sv-empty">No issues detected by the implemented sequence checks. This is not a complete certification of SIP/RFC conformance.</div>';
+ }else{
+  html+='<ul class="sv-findings">';
+  findings.slice(0,60).forEach(f=>{
+   html+='<li class="sv-finding"><span class="sv-level '+f.severity+'">'+(f.severity==='error'?'ERROR':f.severity==='warning'?'WARN':'CHECK')+'</span><div><strong>'+E(f.title)+'</strong><div class="sv-detail">'+E(f.detail)+'</div><div class="sv-ref">Message #'+f.message+(f.related?' · related message #'+f.related:'')+(f.rfc?' · '+E(f.rfc):'')+'</div></div></li>';
+  });
+  html+='</ul>';
+  if(findings.length>60)html+='<div class="sv-empty">Showing the first 60 of '+findings.length+' findings.</div>';
+ }
+ html+='</div>';
+ return html;
+}
+function renderSequenceValidation(){
+ const root=$('validation');
+ if(!root)return;
+ const loaded=['L','R'].filter(side=>S[side]);
+ if(!loaded.length){root.innerHTML='';return}
+ root.innerHTML='<div class="sv-panel"><div class="sv-heading"><div><h2>Protocol Sequence Validation</h2><p>Stateful checks across each selected trace: CSeq progression and request/response correlation, 100rel/RSeq/RAck references, and SDP origin session-version consistency. Results are recomputed from trace order when the selection changes.</p></div><span class="sv-local">Browser memory only</span></div><div class="sv-grid">'+loaded.map(renderValidationSide).join('')+'</div><div class="sv-foot">A violation means the observed messages contradict an implemented check. “Inconclusive” means the related request or response was not available in this selected capture; missing packets are not automatically treated as protocol errors. This is a focused validator, not a full SIP conformance suite.</div></div>';
+}
+
+function run3(){renderSequenceValidation();if(!S.L||!S.R){$('out').innerHTML='';return}info('L');info('R');const o={ignp:new Set($('ignp').value.toLowerCase().split(/[ ,\s]+/).filter(Boolean)),mask:$('mask').checked,norm:$('norm').checked,focus:$('focus').checked,only:$('only').checked,ign:new Set($('ign').value.toLowerCase().split(/[ ,\s]+/).filter(Boolean).map(x=>C[x]||x))};const pr=alignMessages(view('L'),view('R'));let same=0,diff=0,l=0,r=0,h='';pr.forEach(([a,b],i)=>{if(!a||!b){const m=a||b,lbl=a?'LEFT':'RIGHT';a?l++:r++;h+='<details class="m" open><summary><b>#'+(i+1)+'</b> '+E(m.label)+'<span class="only">ONLY '+lbl+'</span><span class="mu">'+tm(m)+'</span></summary><pre>'+E(m.raw)+'</pre></details>';return}const sc=compareMessage2(a,b,o);const n=sc.reduce((t,x)=>t+x.changed,0);n?diff++:same++;/* Section-level filter is handled inside renderSection3 via o.only. */const viewSecs=sc;const secsHtml=viewSecs.map(sec=>renderSection3(sec,o)).join('');h+='<details class="m"'+(n?' open':'')+'><summary><b>#'+(i+1)+'</b> '+E(a.label)+' vs '+E(b.label)+(n?'<span class="bd">'+n+' focused difference'+(n>1?'s':'')+'</span>':'<span class="ok">IDENTICAL</span>')+'<span class="mu">'+tm(a)+' | '+tm(b)+'</span></summary><div class="inline-diff">'+secsHtml+'</div></details>'});$('sum').innerHTML=pr.length+' message slots: <b>'+same+'</b> identical, <b>'+diff+'</b> with focused differences, <b>'+l+'</b> only left, <b>'+r+'</b> only right.';$('out').innerHTML=h}
 function save(s){const t=view(s).map(m=>m.raw.replace(/\r\n/g,'\n').trim()).join('\n\n')+'\n',a=document.createElement('a');a.href=URL.createObjectURL(new Blob([t],{type:'text/plain'}));a.download=S[s].name.replace(/\.[^.]+$/,'')+'.sip.txt';a.click()}
 $('panels').innerHTML=['L','R'].map(s=>'<section class="pn"><h2>'+(s==='L'?'Left':'Right')+'</h2><label class="btn">Upload pcap, pcapng or text<input type="file" id="f'+s+'" accept=".pcap,.pcapng,.cap,.txt,.log,.sip" hidden></label> <span class="mu" id="n'+s+'">No file loaded</span><details><summary class="mu">Or paste SIP text</summary><textarea id="t'+s+'" rows="6" placeholder="Paste one or more SIP messages"></textarea><button data-p="'+s+'">Load text</button></details><div class="bar"><select id="c'+s+'"><option value="">All calls</option></select><select id="g'+s+'" title="Leg = one UAC/UAS endpoint pair inside the selected Call-ID"><option value="">All legs</option></select><button data-v="'+s+'">Save as plain text</button></div><div class="mu" id="i'+s+'"></div></section>').join('');
 for(const s of['L','R']){$('f'+s).onchange=e=>{const f=e.target.files[0];e.target.value='';f&&onFile(s,f)};$('c'+s).onchange=e=>{S[s].call=e.target.value;S[s].leg='';buildLegs(s);info(s);run3()};$('g'+s).onchange=e=>{S[s].leg=e.target.value;info(s);run3()}}
