@@ -396,7 +396,7 @@ function parseMsg(raw,meta){
  for(const l of ls){
   /* Pasted traces are often indented for formatting. Treat an indented line that starts with a header-name and colon as a new header; actual folded continuations do not normally have this shape. */
   const trimmed=l.replace(/^[ \t]+/,'');
-  const indentedHeader=/^[A-Za-z0-9-]+[ \t]*:/.test(trimmed);
+  const indentedHeader=/^[A-Za-z0-9!%*_.+'~\x60-]+[ \t]*:/.test(trimmed);
   if(/^[ \t]/.test(l)&&hs.length&&!indentedHeader){hs[hs.length-1].v+=' '+l.trim();continue}
   const c=l.indexOf(':');if(c<1)continue;const n=l.slice(0,c).trim();let k=n.toLowerCase();if(C[k])k=C[k];hs.push({k,n:n.length===1?k:n,v:l.slice(c+1).trim()})
 }
@@ -1641,8 +1641,9 @@ function seqStartMethod(m){
  return x?x[1]:'';
 }
 function seqHasSdp(m){
- const body=String(m.body||'');
- return /application\/sdp/i.test(seqHeader(m,'content-type'))||/(?:^|\n)v=0\s*(?:\n|$)/i.test(body.replace(/\r\n/g,'\n'))||/(?:^|\n)o=\S/i.test(body.replace(/\r\n/g,'\n'));
+ const body=String(m.body||'').replace(/\r\n/g,'\n');
+ const hasSdpLine=body.split('\n').some(line=>/^v=0\s*$/i.test(line.trim())||/^o=\S/i.test(line.trim()));
+ return /application\/sdp/i.test(seqHeader(m,'content-type'))||hasSdpLine;
 }
 function seqNormalizeSDP(lines){
  return lines.map(line=>{
