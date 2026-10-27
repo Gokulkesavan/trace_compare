@@ -392,14 +392,33 @@ function splitList(v){const o=[];let d=0,q=0,s=0;for(let i=0;i<v.length;i++){con
 function splitSemi(v){const o=[];let d=0,q=0,s=0;for(let i=0;i<v.length;i++){const c=v[i];if(c=='"'&&v[i-1]!='\\')q^=1;else if(!q){if(c=='<')d++;else if(c=='>')d--;else if(c==';'&&!d){o.push(v.slice(s,i).trim());s=i+1}}}o.push(v.slice(s).trim());return o.filter(Boolean)}
 function parseMsg(raw,meta){
  raw=raw.replace(/\r\n/g,'\n').replace(/^\n+/,'');
- const i=raw.indexOf('\n\n'),head=i<0?raw:raw.slice(0,i),body=i<0?'':raw.slice(i+2),ls=head.split('\n'),start=ls.shift().trim(),hs=[];
- for(const l of ls){
-  /* Pasted traces are often indented for formatting. Treat an indented line that starts with a header-name and colon as a new header; actual folded continuations do not normally have this shape. */
+ const ls=raw.split('\n'),startIndex=ls.findIndex(l=>l.trim()!==''),start=(startIndex<0?'':ls[startIndex].trim()),hs=[];
+ /*
+  * SIP wire messages have one empty line between headers and body. Pasted
+  * traces sometimes have additional blank formatting lines between headers.
+  * Skip a blank line when the next nonblank line is another header; otherwise
+  * it marks the start of the body. This keeps ordinary SIP framing intact.
+  */
+ const headerLine=/^[A-Za-z0-9!%*_.+'~\x60-]+[ \t]*:/;
+ let headEnd=ls.length,bodyStart=ls.length,foundSeparator=false;
+ for(let i=Math.max(0,startIndex+1);i<ls.length;i++){
+  if(ls[i].trim()!=='')continue;
+  let j=i+1;
+  while(j<ls.length&&ls[j].trim()==='')j++;
+  if(j>=ls.length){headEnd=i;bodyStart=ls.length;foundSeparator=true;break}
+  if(headerLine.test(ls[j].trim())){i=j-1;continue}
+  headEnd=i;bodyStart=j;foundSeparator=true;break;
+ }
+ const headerLines=ls.slice(startIndex<0?0:startIndex+1,headEnd);
+ for(const l of headerLines){
+  if(!l.trim())continue;
+  /* An indented header field is not a folded continuation; other indented lines may continue the preceding field. */
   const trimmed=l.replace(/^[ \t]+/,'');
-  const indentedHeader=/^[A-Za-z0-9!%*_.+'~\x60-]+[ \t]*:/.test(trimmed);
+  const indentedHeader=headerLine.test(trimmed);
   if(/^[ \t]/.test(l)&&hs.length&&!indentedHeader){hs[hs.length-1].v+=' '+l.trim();continue}
   const c=l.indexOf(':');if(c<1)continue;const n=l.slice(0,c).trim();let k=n.toLowerCase();if(C[k])k=C[k];hs.push({k,n:n.length===1?k:n,v:l.slice(c+1).trim()})
-}
+ }
+ const body=foundSeparator&&bodyStart<ls.length?ls.slice(bodyStart).join('\n'):'';
  const rs=start.match(/^SIP\/2\.0\s+(\d{3})/),cm=((hs.find(h=>h.k==='cseq')||{v:''}).v.trim().split(/\s+/)[1])||'';
  return{...meta,start,hs,body,label:rs?rs[1]+' ('+(cm||'?')+')':((start.match(/^([A-Z]+)\s+/)||[])[1]||start),callId:(hs.find(h=>h.k==='call-id')||{v:'(none)'}).v,cseqMethod:cm};
 }
