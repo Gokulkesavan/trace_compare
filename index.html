@@ -393,7 +393,13 @@ function splitSemi(v){const o=[];let d=0,q=0,s=0;for(let i=0;i<v.length;i++){con
 function parseMsg(raw,meta){
  raw=raw.replace(/\r\n/g,'\n').replace(/^\n+/,'');
  const i=raw.indexOf('\n\n'),head=i<0?raw:raw.slice(0,i),body=i<0?'':raw.slice(i+2),ls=head.split('\n'),start=ls.shift().trim(),hs=[];
- for(const l of ls){if(/^[ \t]/.test(l)&&hs.length){hs[hs.length-1].v+=' '+l.trim();continue}const c=l.indexOf(':');if(c<1)continue;const n=l.slice(0,c).trim();let k=n.toLowerCase();if(C[k])k=C[k];hs.push({k,n:n.length===1?k:n,v:l.slice(c+1).trim()})}
+ for(const l of ls){
+  /* Pasted traces are often indented for formatting. Treat an indented line that starts with a header-name and colon as a new header; actual folded continuations do not normally have this shape. */
+  const trimmed=l.replace(/^[ \t]+/,'');
+  const indentedHeader=/^[A-Za-z0-9!%*_.+'~\x60-]+[ \t]*:/.test(trimmed);
+  if(/^[ \t]/.test(l)&&hs.length&&!indentedHeader){hs[hs.length-1].v+=' '+l.trim();continue}
+  const c=l.indexOf(':');if(c<1)continue;const n=l.slice(0,c).trim();let k=n.toLowerCase();if(C[k])k=C[k];hs.push({k,n:n.length===1?k:n,v:l.slice(c+1).trim()})
+}
  const rs=start.match(/^SIP\/2\.0\s+(\d{3})/),cm=((hs.find(h=>h.k==='cseq')||{v:''}).v.trim().split(/\s+/)[1])||'';
  return{...meta,start,hs,body,label:rs?rs[1]+' ('+(cm||'?')+')':((start.match(/^([A-Z]+)\s+/)||[])[1]||start),callId:(hs.find(h=>h.k==='call-id')||{v:'(none)'}).v,cseqMethod:cm};
 }
@@ -1635,8 +1641,9 @@ function seqStartMethod(m){
  return x?x[1]:'';
 }
 function seqHasSdp(m){
- const body=String(m.body||'');
- return /application\/sdp/i.test(seqHeader(m,'content-type'))||/(?:^|\n)v=0\s*(?:\n|$)/i.test(body.replace(/\r\n/g,'\n'))||/(?:^|\n)o=\S/i.test(body.replace(/\r\n/g,'\n'));
+ const body=String(m.body||'').replace(/\r\n/g,'\n');
+ const hasSdpLine=body.split('\n').some(line=>/^v=0\s*$/i.test(line.trim())||/^o=\S/i.test(line.trim()));
+ return /application\/sdp/i.test(seqHeader(m,'content-type'))||hasSdpLine;
 }
 function seqNormalizeSDP(lines){
  return lines.map(line=>{
