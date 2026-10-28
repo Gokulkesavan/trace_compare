@@ -1869,7 +1869,7 @@ function validateSipSequence(side){
         add('error','sdp-version-unchanged','SDP changed without an origin session-version increment','The SDP session description differs from the previous observed version '+String(prev.version)+', but the o= session-version remained '+String(version)+'.',no,prev.no,'RFC 4566 §5.2; RFC 3264 §8');
        }
        if(version>=prev.version&&(version>prev.version||signature===prev.signature))lastSdp.set(scopedSdpKey,{version,signature,no});
-      }else lastSdp.set(sdpKey,{version,signature,no});
+      }else lastSdp.set(scopedSdpKey,{version,signature,no});
      }
     }
    }
