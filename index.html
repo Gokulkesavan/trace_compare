@@ -1711,9 +1711,10 @@ function validateSipSequence(side){
   if(status!==null&&status>100&&status<200&&!toTag){
    add('error','provisional-missing-to-tag','Provisional response is missing a To tag','Responses 101–199 must carry a To tag to identify the dialog; 100 Trying is excluded.',no,null,'RFC 3261 §8.2.6.2');
   }
-  const branchKey=branch?JSON.stringify([callId,branch]):'';
+  const leg=legKey(m); /* Keep sequence state isolated per observed network leg; a combined pcap may contain both B2BUA sides. */
+  const branchKey=branch?JSON.stringify([leg,callId,branch]):'';
   if(requestMethod&&cseq&&cseq.num<=maxCseq){
-   const txIdentity=JSON.stringify([callId,branch||'(no-branch)',cseq.num,cseq.method,fromTag,toTag,requestMethod]);
+   const txIdentity=JSON.stringify([leg,callId,branch||'(no-branch)',cseq.num,cseq.method,fromTag,toTag,requestMethod]);
    const retransmission=seenRequests.has(txIdentity);
    if(!retransmission){
     seenRequests.add(txIdentity);
@@ -1722,11 +1723,11 @@ function validateSipSequence(side){
      const list=requestByBranch.get(branchKey)||[];
      list.push(rec);requestByBranch.set(branchKey,list);
     }
-    const ck=JSON.stringify([callId,cseq.num,cseq.method]),sameCseq=requestsByCseq.get(ck)||[];
+    const ck=JSON.stringify([leg,callId,cseq.num,cseq.method]),sameCseq=requestsByCseq.get(ck)||[];
     sameCseq.push(rec);requestsByCseq.set(ck,sameCseq);
    }
    if(!retransmission&&cseq.method===requestMethod&&cseq.method!=='ACK'&&cseq.method!=='CANCEL'&&fromTag&&toTag){
-    const dlg=JSON.stringify([callId,[fromTag,toTag].sort(),fromTag]);
+    const dlg=JSON.stringify([leg,callId,[fromTag,toTag].sort(),fromTag]);
     const prev=lastDialogCseq.get(dlg);
     if(prev&&cseq.num<=prev.num){
      add('error','dialog-cseq-not-increasing','In-dialog CSeq did not increase','This new '+requestMethod+' request uses CSeq '+cseq.num+'; the previous observed request from the same dialog endpoint used '+prev.num+' ('+prev.method+'). ACK, CANCEL and recognized retransmissions are excluded.',no,prev.no,'RFC 3261 §12.2.1.1');
@@ -1744,11 +1745,11 @@ function validateSipSequence(side){
       add('error','response-cseq-mismatch','Response CSeq does not match its observed request','Response carries '+cseq.num+' '+cseq.method+' but the request seen on this Call-ID/Via branch used '+related.num+' '+related.method+'.',no,related.no,'RFC 3261 §8.2.6.2');
      }else if(match.method==='INVITE'&&!match.toTag&&match.fromTag&&fromTag===match.fromTag&&toTag){
       /* The first tagged response establishes an early dialog; seed the caller's local CSeq baseline from its initial INVITE. */
-      const dlg=JSON.stringify([callId,[match.fromTag,toTag].sort(),match.fromTag]),prev=lastDialogCseq.get(dlg);
+      const dlg=JSON.stringify([leg,callId,[match.fromTag,toTag].sort(),match.fromTag]),prev=lastDialogCseq.get(dlg);
       if(!prev||match.num>prev.num)lastDialogCseq.set(dlg,{num:match.num,method:'INVITE',no:match.no});
      }
     }else{
-     const same=requestsByCseq.get(JSON.stringify([callId,cseq.num,cseq.method]))||[];
+     const same=requestsByCseq.get(JSON.stringify([leg,callId,cseq.num,cseq.method]))||[];
      if(same.length){
       add('warning','response-branch-mismatch','Response branch did not match the observed request','A request with the same Call-ID and CSeq was seen, but not on this response Via branch. A proxy leg or incomplete capture may explain this.',no,same[same.length-1].no,'RFC 3261 §17.2.3');
      }else{
@@ -1777,14 +1778,14 @@ function validateSipSequence(side){
    }else if(cseq&&cseq.method!=='INVITE'){
     add('error','rseq-non-invite','RSeq is associated with a non-INVITE response','Observed reliable provisional response has CSeq method '+cseq.method+'; RFC 3262 reliable provisional responses apply to INVITE transactions.',no,null,'RFC 3262 §3');
    }else if(cseq){
-    const invKey=JSON.stringify([callId,branch,cseq.num,cseq.method,toTag]);
+    const invKey=JSON.stringify([leg,callId,branch,cseq.num,cseq.method,toTag]);
     const respBodySig=String(m.body||'').replace(/\r\n/g,'\n').trim();
-    const respKey=JSON.stringify([invKey,status,rseq,respBodySig]);
+    const respKey=JSON.stringify([leg,invKey,status,rseq,respBodySig]);
     const dlg=seqDialogKey(m);
-    const rackKey=dlg?JSON.stringify([dlg,rseq,cseq.num,cseq.method]):'';
+    const rackKey=dlg?JSON.stringify([leg,dlg,rseq,cseq.num,cseq.method]):'';
     if(!seenReliableResponses.has(respKey)){
      seenReliableResponses.add(respKey);
-     const pendingKey=dlg?JSON.stringify([dlg,cseq.num,cseq.method]):invKey;
+     const pendingKey=dlg?JSON.stringify([leg,dlg,cseq.num,cseq.method]):invKey;
      const pendingList=pendingReliable.get(pendingKey)||[],pending=pendingList.find(p=>!p.acked);
      if(pending&&pending.rseq!==rseq){
       add('error','next-rseq-before-prack','Another reliable provisional response arrived before PRACK','RSeq '+rseq+' was observed while the previous reliable provisional response (RSeq '+pending.rseq+') had not yet been acknowledged by PRACK.',no,pending.no,'RFC 3262 §3');
@@ -1803,7 +1804,7 @@ function validateSipSequence(side){
    }
   }
   if(status!==null&&status>=200&&status<300&&cseq&&cseq.method==='INVITE'){
-   const dlg=seqDialogKey(m),pendingKey=dlg?JSON.stringify([dlg,cseq.num,cseq.method]):'',pendingList=pendingKey?(pendingReliable.get(pendingKey)||[]):[];
+   const dlg=seqDialogKey(m),pendingKey=dlg?JSON.stringify([leg,dlg,cseq.num,cseq.method]):'',pendingList=pendingKey?(pendingReliable.get(pendingKey)||[]):[];
    const outstanding=pendingList.find(p=>!p.acked&&p.hasSdp);
    if(outstanding)add('error','final-invite-before-prack','2xx INVITE response preceded acknowledgement of an SDP-bearing reliable response','A final 2xx response was observed while reliable provisional response RSeq '+outstanding.rseq+' carrying SDP was still unacknowledged.',no,outstanding.no,'RFC 3262 §3');
   }
@@ -1822,11 +1823,11 @@ function validateSipSequence(side){
      }else if(rmethod!=='INVITE'){
       add('error','rack-method','RAck does not reference an INVITE','The RAck method is '+rmethod+'; this validator expects the reliable provisional response to belong to an INVITE transaction.',no,null,'RFC 3262 §4');
      }else{
-      const dlg=seqDialogKey(m),key=dlg?JSON.stringify([dlg,rr,rc,rmethod]):'';
+      const dlg=seqDialogKey(m),key=dlg?JSON.stringify([leg,dlg,rr,rc,rmethod]):'';
       if(!key||!reliableResponses.has(key)){
        add('warning','rack-reference-not-found','RAck reference was not found in the selected trace','RAck references RSeq '+rr+', CSeq '+rc+' '+rmethod+', but no matching reliable provisional response was observed earlier in this dialog. The capture may be incomplete.',no,null,'RFC 3262 §4');
       }else{
-       const pendingKey=JSON.stringify([dlg,rc,rmethod]),pendingList=pendingReliable.get(pendingKey)||[];
+       const pendingKey=JSON.stringify([leg,dlg,rc,rmethod]),pendingList=pendingReliable.get(pendingKey)||[];
        const pending=pendingList.find(p=>p.rseq===rr&&!p.acked);
        if(pending)pending.acked=true;
       }
@@ -1857,7 +1858,8 @@ function validateSipSequence(side){
      try{version=BigInt(of[2])}catch(e){version=null}
      if(version!==null){
       const signature=seqNormalizeSDP(lines),sdpKey=JSON.stringify([callId,of[0],of[1]]);
-      const prev=lastSdp.get(sdpKey);
+      const scopedSdpKey=JSON.stringify([leg,sdpKey]);
+      const prev=lastSdp.get(scopedSdpKey);
       if(prev){
        if(version<prev.version&&signature!==prev.signature){
         add('error','sdp-version-decreased','SDP changed while its session version decreased','The same SDP origin session moved from version '+String(prev.version)+' to '+String(version)+' while the normalized session description also changed.',no,prev.no,'RFC 4566 §5.2; RFC 3264 §8');
@@ -1866,7 +1868,7 @@ function validateSipSequence(side){
        }else if(version===prev.version&&signature!==prev.signature){
         add('error','sdp-version-unchanged','SDP changed without an origin session-version increment','The SDP session description differs from the previous observed version '+String(prev.version)+', but the o= session-version remained '+String(version)+'.',no,prev.no,'RFC 4566 §5.2; RFC 3264 §8');
        }
-       if(version>=prev.version&&(version>prev.version||signature===prev.signature))lastSdp.set(sdpKey,{version,signature,no});
+       if(version>=prev.version&&(version>prev.version||signature===prev.signature))lastSdp.set(scopedSdpKey,{version,signature,no});
       }else lastSdp.set(sdpKey,{version,signature,no});
      }
     }
