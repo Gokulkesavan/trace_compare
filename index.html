@@ -822,8 +822,23 @@ function parseNameAddr2(v,header){
  fs.push(...params);
  return fs;
 }
+function parseHistoryInfo2(value){
+ const entries=splitTop2(String(value??'').trim(),',');
+ const fields=[];
+ entries.forEach((entry,index)=>{
+  /* RFC 7044 hi-entry = name-addr *(; hi-param).
+     Reuse the existing name-addr/URI parser, but scope every field to
+     its History-Info entry so URI params and hi-params stay distinct. */
+  const parsed=parseNameAddr2(entry,'history-info');
+  for(const field of parsed){
+   fields.push({...field,key:'hi-entry:'+index+':'+field.key,name:'Entry '+(index+1)+' · '+field.name});
+  }
+ });
+ return fields;
+}
 function parseHeader2(k,v){
  const s=String(v??'').trim(), sc=SCHEMA[k]||{rfc:'Generic SIP header / extension',kind:'generic',params:['generic']};
+ if(k==='history-info')return parseHistoryInfo2(s);
  if(sc.kind==='via'){
   const p=splitSemi2(s),base=(p.shift()||'').trim(),m=base.match(/^(\S+)\s+(.+)$/),fs=[];
   if(m){
