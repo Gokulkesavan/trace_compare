@@ -1534,6 +1534,10 @@ function messageSig2(m){
 function messageScore2(a,b){
  const A=messageSig2(a),B=messageSig2(b);
  if(A.kind!==B.kind)return -99;
+ /* A provisional response (1xx) is not the same transaction outcome slot as
+    a final response (2xx-6xx). Keep it one-sided so the final responses on
+    the two traces can align and expose a 200-vs-error status difference. */
+ if(A.kind==='R'&&((Number(A.status)<200)!==(Number(B.status)<200)))return -99;
  let s=1;
  if(A.kind==='Q') s += A.method===B.method ? 8 : -8;
  else {
