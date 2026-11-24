@@ -466,10 +466,13 @@ function tcpMsgs(f,st){
     so shifts every later byte and can manufacture a false SIP message. */
  if(!f.s.length)return;
  const base=f.s[0].seq>>>0;
- const segs=f.s.map(x=>({...x,off:(x.seq-base)>>>0})).sort((a,b)=>a.off-b.off);
+ /* Signed relative offsets also retain segments captured just before the first
+    observed sequence number (out-of-order capture), including across wrap. */
+ const segs=f.s.map(x=>({...x,off:(x.seq-base)|0})).sort((a,b)=>a.off-b.off);
+ const origin=segs[0].off;
  const runs=[];let run=null;
  for(const x of segs){
-  const start=x.off,end=start+x.pay.length;
+  const start=x.off-origin,end=start+x.pay.length;
   if(!run||start>run.end){
    if(run)runs.push(run);
    run={start,end,parts:[x.pay],maps:[[0,x.ts]]};
@@ -491,22 +494,22 @@ function tcpMsgs(f,st){
   for(const part of r.parts){buf.set(part,q);q+=part.length}
   const str=decoder.decode(buf);let p=0;
   while(p<str.length){
-   while(str[p]==='\\r'||str[p]==='\\n')p++;
+   while(str[p]==='\r'||str[p]==='\n')p++;
    if(p>=str.length)break;
-   const lineEnd=str.indexOf('\\r\\n',p);
+   const lineEnd=str.indexOf('\r\n',p);
    if(lineEnd<0)break;
    const startLine=str.slice(p,lineEnd);
    /* Do not impose an arbitrary start-line length: SIP request-URIs can be
       substantially longer than 80 octets. */
    if(!sipLine(startLine)){
-    const next=str.indexOf('\\r\\n',p);
+    const next=str.indexOf('\r\n',p);
     if(next<0)break;
     p=next+2;
     continue;
    }
-   const he=str.indexOf('\\r\\n\\r\\n',p);
+   const he=str.indexOf('\r\n\r\n',p);
    if(he<0)break;
-   const cl=+((str.slice(p,he).match(/^(?:content-length|l)[ \\t]*:[ \\t]*(\\d+)/im)||[])[1]||0);
+   const cl=+((str.slice(p,he).match(/^(?:content-length|l)[ \t]*:[ \t]*(\d+)/im)||[])[1]||0);
    const e=he+4+cl;
    /* A message truncated at the end of a contiguous run is incomplete.
       Do not emit it using bytes from beyond a TCP sequence gap. */
