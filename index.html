@@ -254,7 +254,16 @@ details.m > pre{margin:0;padding:16px 18px;font:12.5px/1.65 var(--font-mono);bac
 }
 .timing-wrap{margin:16px 0 20px}
 .timing-panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow-sm);overflow:hidden}
-.timing-head{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;flex-wrap:wrap;padding:15px 17px;border-bottom:1px solid var(--border)}
+.timing-disclosure-summary{list-style:none;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:14px;padding:13px 17px;background:var(--surface);transition:background .12s}
+.timing-disclosure-summary::-webkit-details-marker{display:none}
+.timing-disclosure-summary:hover{background:var(--surface-2)}
+.timing-disclosure-summary:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+.timing-disclosure-summary::after{content:"";width:9px;height:9px;flex:0 0 9px;border-right:2px solid var(--accent);border-bottom:2px solid var(--accent);transform:rotate(45deg);margin:0 5px 5px 8px;transition:transform .18s}
+.timing-panel[open]>.timing-disclosure-summary{border-bottom:1px solid var(--border)}
+.timing-panel[open]>.timing-disclosure-summary::after{transform:rotate(225deg);margin-bottom:-5px}
+.timing-disclosure-label{font-size:11px;font-weight:700;color:var(--accent);white-space:nowrap;margin-left:auto}
+.timing-content{background:var(--surface)}
+.timing-head{display:flex;align-items:center;justify-content:flex-end;gap:14px;flex-wrap:wrap;padding:12px 17px;border-bottom:1px solid var(--border)}
 .timing-title{font-size:14px;font-weight:700;color:var(--text)}
 .timing-help{font-size:12px;color:var(--text-2);margin-top:4px;max-width:850px}
 .timing-ref-control{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:12px;color:var(--text-2)}
@@ -1736,6 +1745,7 @@ function compareMessage2(a,b,o){
 const S={};
 let timingReference=null;
 let lastAlignedPairs=[];
+let timingPanelOpen=false;
 const legPort=()=>{const e=document.getElementById('legport');return !!(e&&e.checked)};
 /* Leg = unordered endpoint pair, so A->B requests and B->A responses land in the same leg. */
 function legKey(m){if(!m.src||!m.dst)return '(no endpoint info)';const h=x=>legPort()?x:x.slice(0,x.lastIndexOf(':')),a=h(m.src),b=h(m.dst);return a<b?a+' | '+b:b+' | '+a}
@@ -2091,13 +2101,16 @@ function renderTimingPanel(pairs,leftMessages,rightMessages){
    '<td>'+timingValue(lt?lt.previous:null,'left')+'</td><td>'+timingValue(rt?rt.previous:null,'right')+'</td><td>'+timingGap(lt?lt.previous:null,rt?rt.previous:null)+'</td>'+
    '<td>'+timingValue(lt?lt.reference:null,'left')+'</td><td>'+timingValue(rt?rt.reference:null,'right')+'</td><td>'+timingGap(lt?lt.reference:null,rt?rt.reference:null)+'</td></tr>';
  }).join('');
- root.innerHTML='<div class="timing-panel"><div class="timing-head"><div><div class="timing-title">Timing analysis</div><div class="timing-help">Consecutive delta measures time since the previous SIP message in each trace. Reference delta measures elapsed time from the selected message. All values use original capture timestamps.</div></div><label class="timing-ref-control">Reference message<select id="timingRef">'+options+'</select></label></div>'+
+ root.innerHTML='<details class="timing-panel"'+(timingPanelOpen?' open':'')+'><summary class="timing-disclosure-summary"><div><div class="timing-title">Timing analysis</div><div class="timing-help">Optional timing view · consecutive deltas and elapsed time from a selectable reference message</div></div><span class="timing-disclosure-label">Show timing</span></summary><div class="timing-content"><div class="timing-head"><label class="timing-ref-control">Reference message<select id="timingRef">'+options+'</select></label></div>'+
   '<div class="timing-key"><span><span class="timing-value timing-left">Left</span> Left capture</span><span><span class="timing-value timing-right">Right</span> Right capture</span><span><span class="timing-gap timing-gap-slower">+ R−L</span> Right took longer</span><span><span class="timing-gap timing-gap-faster">− R−L</span> Right was faster</span></div>'+
   '<div class="timing-table-wrap"><table class="timing-table"><thead><tr><th rowspan="2">SIP message</th><th colspan="3">Consecutive message delta</th><th colspan="3">Elapsed from reference</th></tr><tr><th>Left</th><th>Right</th><th>R − L</th><th>Left</th><th>Right</th><th>R − L</th></tr></thead><tbody>'+rows+'</tbody></table></div>'+
-  '<div class="timing-foot">Positive R − L means the right trace took longer; negative means it was faster. “—” means the timestamp or reference is unavailable. Text-only SIP input has no capture timestamps.</div></div>';
+  '<div class="timing-foot">Positive R − L means the right trace took longer; negative means it was faster. “—” means the timestamp or reference is unavailable. Text-only SIP input has no capture timestamps.</div></div></details>';
+ const disclosure=root.querySelector('.timing-panel');
+ disclosure.addEventListener('toggle',()=>{timingPanelOpen=disclosure.open});
  $('timingRef').onchange=e=>{
   const index=Number(e.target.value),pair=lastAlignedPairs[index];
   if(pair)timingReference={left:pair[0],right:pair[1]};
+  timingPanelOpen=true;
   run3();
  };
 }
