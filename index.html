@@ -326,8 +326,8 @@ table{border-collapse:collapse;width:100%}
       <input type="checkbox" id="only">
       <span>Only changed</span>
     </label>
-    <label class="switch" title="Collapse messages that repeat the same transaction (same Call-ID, CSeq, Via branch, status)">
-      <input type="checkbox" id="rt" checked>
+    <label class="switch" title="Collapse only identical SIP messages with the same transaction identifiers; changed headers or bodies stay visible">
+      <input type="checkbox" id="rt">
       <span>Collapse retransmissions</span>
     </label>
     <label class="switch" title="Off: a leg is the IP pair (A and B) regardless of ports. On: a leg is the exact IP:port pair, so each TCP connection / port pair becomes its own leg">
@@ -429,9 +429,9 @@ function readCap(buf){
  const d=new Uint8Array(buf),v=new DataView(buf),m=v.getUint32(0),pk=[];
  if(m===0x0a0d0d0a){
   const le=v.getUint32(8,true)===0x1a2b3c4d,ifs=[];let o=0;
-  while(o+12<=d.length){const t=v.getUint32(o,le),l=v.getUint32(o+4,le);if(l<12||o+l>d.length)break;if(t===1){let res=1e-6;for(let q=o+16;q+4<=o+l-4;){const c=v.getUint16(q,le),n=v.getUint16(q+2,le);if(c===0)break;if(c===9&&n){const b=d[q+4];res=b&128?2**-(b&127):10**-b}q+=4+((n+3)&~3)}ifs.push({link:v.getUint16(o+8,le),res})}else if(t===6){const f=ifs[v.getUint32(o+8,le)]||{link:1,res:1e-6},cl=v.getUint32(o+20,le);pk.push({link:f.link,ts:(v.getUint32(o+12,le)*4294967296+v.getUint32(o+16,le))*f.res,data:d.subarray(o+28,o+28+cl)})}o+=l}
+  while(o+12<=d.length){const t=v.getUint32(o,le),l=v.getUint32(o+4,le);if(l<12||o+l>d.length)break;if(t===1){let res=1e-6;for(let q=o+16;q+4<=o+l-4;){const c=v.getUint16(q,le),n=v.getUint16(q+2,le);if(c===0)break;if(c===9&&n){const b=d[q+4];res=b&128?2**-(b&127):10**-b}q+=4+((n+3)&~3)}ifs.push({link:v.getUint16(o+8,le),res})}else if(t===6){const f=ifs[v.getUint32(o+8,le)]||{link:1,res:1e-6},cl=v.getUint32(o+20,le);pk.push({frame:pk.length+1,link:f.link,ts:(v.getUint32(o+12,le)*4294967296+v.getUint32(o+16,le))*f.res,data:d.subarray(o+28,o+28+cl)})}o+=l}
  }else{
-  const le=m===0xd4c3b2a1||m===0x4d3cb2a1,ns=m===0xa1b23c4d||m===0x4d3cb2a1;if(!(le||ns||m===0xa1b2c3d4))throw Error('Unrecognised capture format');const link=v.getUint32(20,le);let o=24;while(o+16<=d.length){const cl=v.getUint32(o+8,le);pk.push({link,ts:v.getUint32(o,le)+v.getUint32(o+4,le)/(ns?1e9:1e6),data:d.subarray(o+16,o+16+cl)});o+=16+cl}
+  const le=m===0xd4c3b2a1||m===0x4d3cb2a1,ns=m===0xa1b23c4d||m===0x4d3cb2a1;if(!(le||ns||m===0xa1b2c3d4))throw Error('Unrecognised capture format');const link=v.getUint32(20,le);let o=24;while(o+16<=d.length){const cl=v.getUint32(o+8,le);pk.push({frame:pk.length+1,link,ts:v.getUint32(o,le)+v.getUint32(o+4,le)/(ns?1e9:1e6),data:d.subarray(o+16,o+16+cl)});o+=16+cl}
  }
  return pk;
 }
@@ -456,8 +456,8 @@ function pkt(p,st){
   if(nx===51){if(pl.length<2)return;const l=(pl[1]+2)*4;if(l>pl.length)return;nx=pl[0];pl=pl.subarray(l)}
   pr=nx;
  }else return;
- if(pr===17){if(pl.length<8)return;const t=new TextDecoder().decode(pl.subarray(8,rd16(pl,4)));if(SIP.test(t.trimStart()))st.msgs.push({raw:t,ts:p.ts,proto:'UDP',src:src+':'+rd16(pl,0),dst:dst+':'+rd16(pl,2)})}
- else if(pr===6){if(pl.length<20)return;const pay=pl.subarray((pl[12]>>4)*4);if(!pay.length)return;if((pay[0]===22||pay[0]===23)&&pay[1]===3)st.tls++;const sp=rd16(pl,0),dp=rd16(pl,2),k=src+':'+sp+'>'+dst+':'+dp,f=st.tcp.get(k)||{src:src+':'+sp,dst:dst+':'+dp,s:[]};st.tcp.set(k,f);f.s.push({seq:rd32(pl,4),pay,ts:p.ts})}
+ if(pr===17){if(pl.length<8)return;const t=new TextDecoder().decode(pl.subarray(8,rd16(pl,4)));if(SIP.test(t.trimStart()))st.msgs.push({raw:t,ts:p.ts,frame:p.frame,proto:'UDP',src:src+':'+rd16(pl,0),dst:dst+':'+rd16(pl,2)})}
+ else if(pr===6){if(pl.length<20)return;const pay=pl.subarray((pl[12]>>4)*4);if(!pay.length)return;if((pay[0]===22||pay[0]===23)&&pay[1]===3)st.tls++;const sp=rd16(pl,0),dp=rd16(pl,2),k=src+':'+sp+'>'+dst+':'+dp,f=st.tcp.get(k)||{src:src+':'+sp,dst:dst+':'+dp,s:[]};st.tcp.set(k,f);f.s.push({seq:rd32(pl,4),pay,ts:p.ts,frame:p.frame})}
 }
 function tcpMsgs(f,st){
  /* TCP is a byte stream, not a packet concatenation. Unwrap sequence numbers
@@ -475,14 +475,14 @@ function tcpMsgs(f,st){
   const start=x.off-origin,end=start+x.pay.length;
   if(!run||start>run.end){
    if(run)runs.push(run);
-   run={start,end,parts:[x.pay],maps:[[0,x.ts]]};
+   run={start,end,parts:[x.pay],maps:[[0,x.ts,x.frame]]};
    continue;
   }
   /* Retransmissions and partial overlaps: keep already-seen bytes, append
      only the portion extending the contiguous right edge. */
   if(end>run.end){
    const from=run.end-start;
-   run.maps.push([run.end-run.start,x.ts]);
+   run.maps.push([run.end-run.start,x.ts,x.frame]);
    run.parts.push(x.pay.subarray(Math.max(0,from)));
    run.end=end;
   }
@@ -515,12 +515,12 @@ function tcpMsgs(f,st){
       Do not emit it using bytes from beyond a TCP sequence gap. */
    if(e>buf.length)break;
    const tm=(r.maps.filter(m=>m[0]<=p).pop()||r.maps[0]);
-   st.msgs.push({raw:new TextDecoder().decode(buf.subarray(p,e)),ts:tm[1],proto:'TCP',src:f.src,dst:f.dst});
+   st.msgs.push({raw:new TextDecoder().decode(buf.subarray(p,e)),ts:tm[1],frame:tm[2],proto:'TCP',src:f.src,dst:f.dst});
    p=e;
   }
  }
 }
-function extract(pk){const st={fr:new Map,tcp:new Map,fr6:new Map,msgs:[],tls:0};for(const p of pk){try{pkt(p,st)}catch{}}for(const f of st.tcp.values())tcpMsgs(f,st);st.msgs.sort((a,b)=>a.ts-b.ts);return st}
+function extract(pk){const st={fr:new Map,tcp:new Map,fr6:new Map,msgs:[],tls:0};for(const p of pk){try{pkt(p,st)}catch{}}for(const f of st.tcp.values())tcpMsgs(f,st);st.msgs.sort((a,b)=>a.ts-b.ts||(a.frame||0)-(b.frame||0));st.msgs.forEach((m,i)=>m.messageNo=i+1);return st}
 
 /* ---------- RFC-structured semantic comparison ---------- */
 const SCHEMA={
@@ -1691,16 +1691,28 @@ const S={};
 const legPort=()=>{const e=document.getElementById('legport');return !!(e&&e.checked)};
 /* Leg = unordered endpoint pair, so A->B requests and B->A responses land in the same leg. */
 function legKey(m){if(!m.src||!m.dst)return '(no endpoint info)';const h=x=>legPort()?x:x.slice(0,x.lastIndexOf(':')),a=h(m.src),b=h(m.dst);return a<b?a+' | '+b:b+' | '+a}
-const view=s=>S[s].all.filter(m=>(!S[s].call||m.callId===S[s].call)&&(!S[s].leg||legKey(m)===S[s].leg)&&!(m.dup&&rtOn()));const tm=m=>m.ts?new Date(m.ts*1000).toISOString().slice(11,23):'';
+const view=s=>S[s].all.filter(m=>(!S[s].call||m.callId===S[s].call)&&(!S[s].leg||legKey(m)===S[s].leg)&&!(m.dup&&rtOn()));const tm=m=>m.ts?new Date(m.ts*1000).toISOString().slice(11,23):'';const msgRef=m=>m?(Number.isInteger(m.frame)?'F'+m.frame:'M'+m.messageNo):'—';
 function info(s){const x=S[s],v=view(s),u=v.filter(m=>m.proto==='UDP').length,t=v.filter(m=>m.proto==='TCP').length;$('i'+s).textContent=v.length+' SIP messages'+(u+t?' (UDP '+u+', TCP '+t+')':'')+(x.tls?'. '+x.tls+' TLS packets found: encrypted SIP cannot be decoded.':'')+(rtOn()&&x.all.some(m=>m.dup)?'. '+x.all.filter(m=>m.dup).length+' retransmission(s) collapsed.':'')+(x.all.length?'':'. No SIP found.')}
-function rtKey(m){const via=(m.hs.find(x=>x.k==='via')||{v:''}).v,br=(via.match(/branch\s*=\s*([^;,\s]+)/i)||[])[1]||'',cs=((m.hs.find(x=>x.k==='cseq')||{v:''}).v||'').trim().replace(/\s+/g,' '),to=(((m.hs.find(x=>x.k==='to')||{v:''}).v||'').match(/tag\s*=\s*([^;>\s]+)/i)||[])[1]||'';if(!br||!cs)return '';const rs=m.start.match(/^SIP\/2\.0\s+(\d{3})/);return [m.callId,rs?'R'+rs[1]:'Q'+(m.start.split(/\s+/)[0]||''),cs,br,to,(m.hs.find(x=>x.k==='rseq')||{v:''}).v.trim(),legKey(m)].join('|')}
+function rtKey(m){
+ const via=(m.hs.find(x=>x.k==='via')||{v:''}).v;
+ const br=(via.match(/branch\s*=\s*([^;,\s]+)/i)||[])[1]||'';
+ const cs=((m.hs.find(x=>x.k==='cseq')||{v:''}).v||'').trim().replace(/\s+/g,' ');
+ const to=(((m.hs.find(x=>x.k==='to')||{v:''}).v||'').match(/tag\s*=\s*([^;>\s]+)/i)||[])[1]||'';
+ if(!br||!cs)return '';
+ const rs=m.start.match(/^SIP\/2\.0\s+(\d{3})/);
+ /* A transaction tuple alone is insufficient: a later 18x can reuse those
+    identifiers while carrying a new SDP or changed headers. Only collapse
+    the same SIP message content on the same observed leg. */
+ const payload=String(m.raw||'').replace(/\r\n/g,'\n').trim();
+ return JSON.stringify([m.callId,rs?'R'+rs[1]:'Q'+(m.start.split(/\s+/)[0]||''),cs,br,to,(m.hs.find(x=>x.k==='rseq')||{v:''}).v.trim(),legKey(m),payload]);
+}
 function markRetx(all){const seen=new Set();for(const m of all){m.rk=rtKey(m);m.dup=false;if(!m.rk)continue;if(seen.has(m.rk))m.dup=true;else seen.add(m.rk)}}
 const rtOn=()=>{const e=document.getElementById('rt');return !e||e.checked};
 function buildLegs(s){const x=S[s],g=new Map(),h=a=>legPort()||!a?a:a.slice(0,a.lastIndexOf(':'));
  x.all.filter(m=>!x.call||m.callId===x.call).forEach(m=>{const k=legKey(m),e=g.get(k)||g.set(k,{n:0,lbl:m.src&&m.dst?h(m.src)+' \u2192 '+h(m.dst):k}).get(k);e.n++});
  if(x.leg&&!g.has(x.leg))x.leg='';
  $('g'+s).innerHTML='<option value="">All legs ('+g.size+')</option>'+[...g].map(([k,e])=>'<option value="'+E(k)+'"'+(k===x.leg?' selected':'')+'>'+E(e.lbl)+' ('+e.n+' msgs)</option>').join('');$('g'+s).disabled=g.size<2&&!x.leg}
-function setSide(s,raws,name,tls){const all0=raws.map(r=>parseMsg(r.raw,r));markRetx(all0);S[s]={name,all:all0,call:'',leg:'',tls};const cs=new Map();S[s].all.forEach(m=>cs.set(m.callId,(cs.get(m.callId)||0)+1));$('n'+s).textContent=name;$('c'+s).innerHTML='<option value="">All calls ('+cs.size+')</option>'+[...cs].map(([k,n])=>'<option value="'+E(k)+'">'+E(k.slice(0,48))+' ('+n+' msgs)</option>').join('');buildLegs(s);info(s);run3()}
+function setSide(s,raws,name,tls){const all0=raws.map((r,i)=>parseMsg(r.raw,{...r,messageNo:i+1}));markRetx(all0);S[s]={name,all:all0,call:'',leg:'',tls};const cs=new Map();S[s].all.forEach(m=>cs.set(m.callId,(cs.get(m.callId)||0)+1));$('n'+s).textContent=name;$('c'+s).innerHTML='<option value="">All calls ('+cs.size+')</option>'+[...cs].map(([k,n])=>'<option value="'+E(k)+'">'+E(k.slice(0,48))+' ('+n+' msgs)</option>').join('');buildLegs(s);info(s);run3()}
 async function onFile(s,f){try{const b=await f.arrayBuffer(),m=b.byteLength>3?new DataView(b).getUint32(0):0;if([0x0a0d0d0a,0xa1b2c3d4,0xd4c3b2a1,0xa1b23c4d,0x4d3cb2a1].includes(m)){const st=extract(readCap(b));setSide(s,st.msgs,f.name,st.tls)}else setSide(s,textMsgs(new TextDecoder().decode(b)),f.name,0)}catch(e){$('i'+s).textContent='Could not read file: '+e.message}}
 function changedKeys(sec){return new Set(sec.fields.filter(f=>!f.informational&&['chg','L','R'].includes(f.st)).map(f=>f.key))}
 function mark2(text,focus){return focus?'<span class="focus-value">'+$q(text)+'</span>':$q(text)}
@@ -1984,7 +1996,7 @@ function renderSequenceValidation(){
  root.innerHTML='<div class="sv-panel"><div class="sv-heading"><div><h2>Protocol Sequence Validation</h2><p>Stateful checks across each selected trace: CSeq progression and request/response correlation, 100rel/RSeq/RAck references, and SDP origin session-version consistency. Results are recomputed from trace order when the selection changes.</p></div><span class="sv-local">Browser memory only</span></div><div class="sv-grid">'+loaded.map(renderValidationSide).join('')+'</div><div class="sv-foot">A violation means the observed messages contradict an implemented check. “Inconclusive” means the related request or response was not available in this selected capture; missing packets are not automatically treated as protocol errors. This is a focused validator, not a full SIP conformance suite.</div></div>';
 }
 
-function run3(){renderSequenceValidation();if(!S.L||!S.R){$('out').innerHTML='';return}info('L');info('R');const o={ignp:new Set($('ignp').value.toLowerCase().split(/[ ,\s]+/).filter(Boolean)),mask:$('mask').checked,norm:$('norm').checked,focus:$('focus').checked,only:$('only').checked,ign:new Set($('ign').value.toLowerCase().split(/[ ,\s]+/).filter(Boolean).map(x=>C[x]||x))};const pr=alignMessages(view('L'),view('R'));let same=0,diff=0,l=0,r=0,h='';pr.forEach(([a,b],i)=>{if(!a||!b){const m=a||b,lbl=a?'LEFT':'RIGHT';a?l++:r++;h+='<details class="m" open><summary><b>#'+(i+1)+'</b> '+E(m.label)+'<span class="only">ONLY '+lbl+'</span><span class="mu">'+tm(m)+'</span></summary><pre>'+E(m.raw)+'</pre></details>';return}const sc=compareMessage2(a,b,o);const n=sc.reduce((t,x)=>t+x.changed,0);n?diff++:same++;/* Section-level filter is handled inside renderSection3 via o.only. */const viewSecs=sc;const secsHtml=viewSecs.map(sec=>renderSection3(sec,o)).join('');h+='<details class="m"'+(n?' open':'')+'><summary><b>#'+(i+1)+'</b> '+E(a.label)+' vs '+E(b.label)+(n?'<span class="bd">'+n+' focused difference'+(n>1?'s':'')+'</span>':'<span class="ok">IDENTICAL</span>')+'<span class="mu">'+tm(a)+' | '+tm(b)+'</span></summary><div class="inline-diff">'+secsHtml+'</div></details>'});$('sum').innerHTML=pr.length+' message slots: <b>'+same+'</b> identical, <b>'+diff+'</b> with focused differences, <b>'+l+'</b> only left, <b>'+r+'</b> only right.';$('out').innerHTML=h}
+function run3(){renderSequenceValidation();if(!S.L||!S.R){$('out').innerHTML='';return}info('L');info('R');const o={ignp:new Set($('ignp').value.toLowerCase().split(/[ ,\s]+/).filter(Boolean)),mask:$('mask').checked,norm:$('norm').checked,focus:$('focus').checked,only:$('only').checked,ign:new Set($('ign').value.toLowerCase().split(/[ ,\s]+/).filter(Boolean).map(x=>C[x]||x))};const pr=alignMessages(view('L'),view('R'));let same=0,diff=0,l=0,r=0,h='';pr.forEach(([a,b],i)=>{if(!a||!b){const m=a||b,lbl=a?'LEFT':'RIGHT';a?l++:r++;h+='<details class="m" open><summary><b>'+E(msgRef(m))+'</b> '+E(m.label)+'<span class="only">ONLY '+lbl+'</span><span class="mu">'+tm(m)+'</span></summary><pre>'+E(m.raw)+'</pre></details>';return}const sc=compareMessage2(a,b,o);const n=sc.reduce((t,x)=>t+x.changed,0);n?diff++:same++;/* Section-level filter is handled inside renderSection3 via o.only. */const viewSecs=sc;const secsHtml=viewSecs.map(sec=>renderSection3(sec,o)).join('');h+='<details class="m"'+(n?' open':'')+'><summary><b>L '+E(msgRef(a))+' / R '+E(msgRef(b))+'</b> '+E(a.label)+' vs '+E(b.label)+(n?'<span class="bd">'+n+' focused difference'+(n>1?'s':'')+'</span>':'<span class="ok">IDENTICAL</span>')+'<span class="mu">'+tm(a)+' | '+tm(b)+'</span></summary><div class="inline-diff">'+secsHtml+'</div></details>'});$('sum').innerHTML=pr.length+' message slots: <b>'+same+'</b> identical, <b>'+diff+'</b> with focused differences, <b>'+l+'</b> only left, <b>'+r+'</b> only right.';$('out').innerHTML=h}
 function save(s){const t=view(s).map(m=>m.raw.replace(/\r\n/g,'\n').trim()).join('\n\n')+'\n',a=document.createElement('a');a.href=URL.createObjectURL(new Blob([t],{type:'text/plain'}));a.download=S[s].name.replace(/\.[^.]+$/,'')+'.sip.txt';a.click()}
 $('panels').innerHTML=['L','R'].map(s=>'<section class="pn"><h2>'+(s==='L'?'Left':'Right')+'</h2><label class="btn">Upload pcap, pcapng or text<input type="file" id="f'+s+'" accept=".pcap,.pcapng,.cap,.txt,.log,.sip" hidden></label> <span class="mu" id="n'+s+'">No file loaded</span><details><summary class="mu">Or paste SIP text</summary><textarea id="t'+s+'" rows="6" placeholder="Paste one or more SIP messages"></textarea><button data-p="'+s+'">Load text</button></details><div class="bar"><select id="c'+s+'"><option value="">All calls</option></select><select id="g'+s+'" title="Leg = one UAC/UAS endpoint pair inside the selected Call-ID"><option value="">All legs</option></select><button data-v="'+s+'">Save as plain text</button></div><div class="mu" id="i'+s+'"></div></section>').join('');
 for(const s of['L','R']){$('f'+s).onchange=e=>{const f=e.target.files[0];e.target.value='';f&&onFile(s,f)};$('c'+s).onchange=e=>{S[s].call=e.target.value;S[s].leg='';buildLegs(s);info(s);run3()};$('g'+s).onchange=e=>{S[s].leg=e.target.value;info(s);run3()}}
